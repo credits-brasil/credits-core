@@ -1,0 +1,48 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Order {
+  id             String   @id
+  uuid           String   @default(uuid())
+  client_id      String
+  status         String   @default("PROCESS")
+  code           Int
+  type           String //CPF ou CNPJ
+  document       String
+  report_id      String // 633
+  report_name    String // SPC + SCORE
+  duration       Int // Tempo de duracao da resposta do fonte "SPC"
+  source         String // SPC CACHE e FINQI  Fontes que vamos buscar as coisas
+  transaction_id String //<protocolo numero="15206658677" digito="6"/>
+  origin         String   @default("API")
+  ip             String // Verificar se é o IP do client
+  external_id    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([id, client_id, document, code, ip])
+  @@map("orders")
+}
+
+model Client {
+  id           String   @id
+  name         String
+  ip           Json
+  mounth_limit Int      @default(1000)
+  day_limit    Int      @default(1000)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("clients")
+}

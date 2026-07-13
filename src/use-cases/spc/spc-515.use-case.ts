@@ -1,0 +1,48 @@
+import { AppError } from "@/constants/spc";
+
+import { FriendlyError, getTipoConsumidor } from "@/utils";
+import { HTTPSPCService } from "@/services";
+
+export async function spc515UseCase(
+  document: string,
+  typeDocument: "CPF" | "CNPJ",
+  insumos: number[],
+) {
+  const allowedInsumos = new Set([
+    18, 49, 5262, 5241, 5224, 5226, 5227, 5263, 5257, 5260, 5240, 5256, 5265,
+    5255, 5264, 5225, 24, 17, 5267, 5261, 5228, 5229, 5245, 5259, 5183, 5268,
+  ]);
+
+  const invalidInsumos = insumos.filter(
+    (insumo) => !allowedInsumos.has(insumo),
+  );
+
+  if (invalidInsumos.length > 0) {
+    throw new FriendlyError({
+      message: `Insumos inválidos: ${invalidInsumos.join(", ")}`,
+      context: "spc325UseCase.validation",
+      code: 400,
+    });
+  }
+
+  try {
+    const { xml, json } = await HTTPSPCService({
+      productCode: 515,
+      tipoConsumidor: getTipoConsumidor(typeDocument),
+      document,
+      insumos,
+    });
+
+    return {
+      // xml: soapXml,
+      json2: json,
+    };
+  } catch (error) {
+    throw new FriendlyError({
+      message: AppError.GET_ALL_BRANDS_ERROR,
+      originalError: error,
+      context: "spcUseCase",
+      code: 400,
+    });
+  }
+}
