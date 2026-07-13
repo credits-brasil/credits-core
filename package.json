@@ -2,11 +2,11 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server",
   "scripts": {
     "postinstall": "prisma generate",
     "build": "tsc && tsc-alias",
-    "start": "node dist/server.js",
+    "start": "node ./dist/server.js",
     "reset": "rm -rf node_modules && rm -rf coverage && rm -rf package-lock.json && rm -rf yarn.lock && yarn",
     "dev": "tsx watch -r tsconfig-paths/register src/server.ts",
     "test": "jest",
@@ -25,7 +25,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "dependencies": {
     "@fastify/cors": "^11.2.0",
     "@prisma/adapter-pg": "^7.8.0",
@@ -42,6 +41,7 @@
     "@types/pg": "^8.20.0",
     "@types/xml2js": "^0.4.14",
     "prisma": "^7.8.0",
+    "tsc-alias": "^1.9.1",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   },
