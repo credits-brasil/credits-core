@@ -13,7 +13,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage --testPathPattern='index'",
     "test:ci": "jest --ci",
-    "prepare": "husky",
+    "prepare": "npx husky",
     "typecheck": "tsc",
     "prisma:migrate": "npx prisma migrate dev",
     "prisma:generate": "npx prisma generate",
