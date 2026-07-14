@@ -51,6 +51,12 @@ export const HTTPSPCService = async ({
       json,
     };
   } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.log(error.response?.data, "Erro da API SPC", error?.response);
+    } else {
+      console.log(error);
+    }
+
     throw new FriendlyError({
       message: "Erro ao consultar SPC",
       originalError: error,
@@ -58,4 +64,4 @@ export const HTTPSPCService = async ({
       code: 400,
     });
   }
-}
+};
