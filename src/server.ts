@@ -2,8 +2,8 @@ import "dotenv/config";
 
 import Fastify, { FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
-// import cron from "node-cron";
-// import axios from "axios";
+import cron from "node-cron";
+import axios from "axios";
 
 import { spcRoutes } from "./routes/spc.routes";
 
@@ -26,15 +26,15 @@ server.get("/start-server", (_, reply) => {
   return reply.code(200).send({ message: "OK!" });
 });
 
-// cron.schedule("*/1 * * * *", async () => {
-//   try {
-//     await axios.get(`${String(process.env.API_URL)}/start-server`);
+cron.schedule("*/1 * * * *", async () => {
+  try {
+    await axios.get(`https://credits-core.onrender.com/start-server`);
 
-//     console.log("⏳ Executando a cada 1 minutos:", new Date().toLocaleString());
-//   } catch {
-//     console.log("❌ Executando a cada 1 minutos:", new Date().toLocaleString());
-//   }
-// });
+    console.log("⏳ Executando a cada 1 minutos:", new Date().toLocaleString());
+  } catch {
+    console.log("❌ Executando a cada 1 minutos:", new Date().toLocaleString());
+  }
+});
 
 const start = async () => {
   try {
