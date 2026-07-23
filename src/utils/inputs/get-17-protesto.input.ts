@@ -7,27 +7,49 @@ export const get17ProtestoInput = (protesto: {
       "valor-total"?: string;
     };
   };
-  "detalhe-protesto"?: {
-    $?: {
-      "data-protesto"?: string;
-      valor?: string;
-    };
-    cartorio?: {
-      $?: {
-        nome?: string;
-      };
-      cidade?: {
+  "detalhe-protesto"?:
+    | {
         $?: {
-          nome?: string;
+          "data-protesto"?: string;
+          valor?: string;
         };
-        estado?: {
+        cartorio?: {
           $?: {
-            "sigla-uf"?: string;
+            nome?: string;
+          };
+          cidade?: {
+            $?: {
+              nome?: string;
+            };
+            estado?: {
+              $?: {
+                "sigla-uf"?: string;
+              };
+            };
           };
         };
-      };
-    };
-  }[];
+      }
+    | {
+        $?: {
+          "data-protesto"?: string;
+          valor?: string;
+        };
+        cartorio?: {
+          $?: {
+            nome?: string;
+          };
+          cidade?: {
+            $?: {
+              nome?: string;
+            };
+            estado?: {
+              $?: {
+                "sigla-uf"?: string;
+              };
+            };
+          };
+        };
+      }[];
 }): {
   resumo: {
     "quantidade-total"?: string;
@@ -42,21 +64,28 @@ export const get17ProtestoInput = (protesto: {
     cidade?: string;
     estado?: string;
   }[];
-} => ({
-  resumo: {
-    "quantidade-total": protesto?.resumo?.$?.["quantidade-total"],
-    "data-primeira-ocorrencia":
-      protesto?.resumo?.$?.["data-primeira-ocorrencia"],
-    "data-ultima-ocorrencia": protesto?.resumo?.$?.["data-ultima-ocorrencia"],
-    "valor-total": protesto?.resumo?.$?.["valor-total"],
-  },
+} => {
+  const detalhes = Array.isArray(protesto?.["detalhe-protesto"])
+    ? protesto["detalhe-protesto"]
+    : protesto?.["detalhe-protesto"]
+      ? [protesto["detalhe-protesto"]]
+      : [];
 
-  "detalhe-protesto":
-    protesto?.["detalhe-protesto"]?.map((i) => ({
+  return {
+    resumo: {
+      "quantidade-total": protesto?.resumo?.$?.["quantidade-total"],
+      "data-primeira-ocorrencia":
+        protesto?.resumo?.$?.["data-primeira-ocorrencia"],
+      "data-ultima-ocorrencia": protesto?.resumo?.$?.["data-ultima-ocorrencia"],
+      "valor-total": protesto?.resumo?.$?.["valor-total"],
+    },
+
+    "detalhe-protesto": detalhes.map((i) => ({
       "data-protesto": i.$?.["data-protesto"],
       valor: i.$?.valor,
       cartorio: i.cartorio?.$?.nome,
       cidade: i.cartorio?.cidade?.$?.nome,
       estado: i.cartorio?.cidade?.estado?.$?.["sigla-uf"],
-    })) ?? [],
-});
+    })),
+  };
+};

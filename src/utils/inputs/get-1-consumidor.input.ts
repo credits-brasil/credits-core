@@ -71,6 +71,7 @@ export const get1ConsumidorInput = (
         idade?: string;
         nome?: string;
         "nome-mae"?: string;
+        "nome-pai"?: string;
         "numero-rg"?: string;
         "numero-titulo-eleitor"?: string;
         "pessoa-estrangeira"?: string;
@@ -210,6 +211,7 @@ export const get1ConsumidorInput = (
     idade: consumidor?.["consumidor-pessoa-fisica"]?.$?.idade,
     nome: consumidor?.["consumidor-pessoa-fisica"]?.$?.nome,
     "nome-mae": consumidor?.["consumidor-pessoa-fisica"]?.$?.["nome-mae"],
+    "nome-pai": consumidor?.["consumidor-pessoa-fisica"]?.$?.["nome-pai"],
     "numero-rg": consumidor?.["consumidor-pessoa-fisica"]?.$?.["numero-rg"],
     "numero-titulo-eleitor":
       consumidor?.["consumidor-pessoa-fisica"]?.$?.["numero-titulo-eleitor"],

@@ -119,6 +119,8 @@ export async function spc325UseCase(
       insumos,
     });
 
+    console.log( json["S:Envelope"]["S:Body"]["ns2:resultado"]["consulta-realizada"], 'json')
+
     return typeDocument === "CPF"
       ? {
           // DEFAULT

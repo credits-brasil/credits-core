@@ -6,34 +6,63 @@ export const get8SPCInput = (spc: {
       "valor-total"?: string;
     };
   };
-  "detalhe-spc"?: {
-    $?: {
-      "nome-associado"?: string;
-      "data-inclusao"?: string;
-      "data-vencimento"?: string;
-      "nome-entidade"?: string;
-      contrato?: string;
-      "registro-instituicao-financeira"?: string;
-      "comprador-fiador-avalista"?: string;
-      valor?: string;
-    };
-    "telefone-associado"?: {
-      $?: {
-        "numero-ddd"?: string;
-        numero?: string;
-      };
-    };
-    "cidade-associado"?: {
-      $?: {
-        nome?: string;
-      };
-      estado?: {
+  "detalhe-spc"?:
+    | {
         $?: {
-          "sigla-uf"?: string;
+          "nome-associado"?: string;
+          "data-inclusao"?: string;
+          "data-vencimento"?: string;
+          "nome-entidade"?: string;
+          contrato?: string;
+          "registro-instituicao-financeira"?: string;
+          "comprador-fiador-avalista"?: string;
+          valor?: string;
         };
-      };
-    };
-  }[];
+        "telefone-associado"?: {
+          $?: {
+            "numero-ddd"?: string;
+            numero?: string;
+          };
+        };
+        "cidade-associado"?: {
+          $?: {
+            nome?: string;
+          };
+          estado?: {
+            $?: {
+              "sigla-uf"?: string;
+            };
+          };
+        };
+      }
+    | {
+        $?: {
+          "nome-associado"?: string;
+          "data-inclusao"?: string;
+          "data-vencimento"?: string;
+          "nome-entidade"?: string;
+          contrato?: string;
+          "registro-instituicao-financeira"?: string;
+          "comprador-fiador-avalista"?: string;
+          valor?: string;
+        };
+        "telefone-associado"?: {
+          $?: {
+            "numero-ddd"?: string;
+            numero?: string;
+          };
+        };
+        "cidade-associado"?: {
+          $?: {
+            nome?: string;
+          };
+          estado?: {
+            $?: {
+              "sigla-uf"?: string;
+            };
+          };
+        };
+      }[];
 }): {
   resumo: {
     "quantidade-total"?: string;
@@ -53,15 +82,21 @@ export const get8SPCInput = (spc: {
     "cidade-associado"?: string;
     estado?: string;
   }[];
-} => ({
-  resumo: {
-    "quantidade-total": spc?.resumo?.$?.["quantidade-total"],
-    "data-ultima-ocorrencia": spc?.resumo?.$?.["data-ultima-ocorrencia"],
-    "valor-total": spc?.resumo?.$?.["valor-total"],
-  },
+} => {
+  const detalhes = Array.isArray(spc?.["detalhe-spc"])
+    ? spc["detalhe-spc"]
+    : spc?.["detalhe-spc"]
+      ? [spc["detalhe-spc"]]
+      : [];
 
-  "detalhe-spc":
-    spc?.["detalhe-spc"]?.map((i) => ({
+  return {
+    resumo: {
+      "quantidade-total": spc?.resumo?.$?.["quantidade-total"],
+      "data-ultima-ocorrencia": spc?.resumo?.$?.["data-ultima-ocorrencia"],
+      "valor-total": spc?.resumo?.$?.["valor-total"],
+    },
+
+    "detalhe-spc": detalhes.map((i) => ({
       "nome-associado": i.$?.["nome-associado"],
       "data-inclusao": i.$?.["data-inclusao"],
       "data-vencimento": i.$?.["data-vencimento"],
@@ -69,12 +104,14 @@ export const get8SPCInput = (spc: {
       contrato: i.$?.contrato,
       "registro-instituicao-financeira":
         i.$?.["registro-instituicao-financeira"],
-      "comprador-fiador-avalista": i.$?.["comprador-fiador-avalista"],
+      "comprador-fiador-avalista":
+        i.$?.["comprador-fiador-avalista"],
       valor: i.$?.valor,
       "telefone-associado": `${
         i["telefone-associado"]?.$?.["numero-ddd"] ?? ""
       } ${i["telefone-associado"]?.$?.numero ?? ""}`.trim(),
       "cidade-associado": i["cidade-associado"]?.$?.nome,
       estado: i["cidade-associado"]?.estado?.$?.["sigla-uf"],
-    })) ?? [],
-});
+    })),
+  };
+};

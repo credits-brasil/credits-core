@@ -368,7 +368,7 @@ export async function spc629UseCase(
       }),
 
       // 5183
-      ...(insumos.includes(5244) && {}),
+      ...(insumos.includes(5183) && {}),
     };
   } catch (error) {
     throw new FriendlyError({
