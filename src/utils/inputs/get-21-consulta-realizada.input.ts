@@ -1,3 +1,21 @@
+type DetalheConsultaRealizada = {
+  $?: {
+    "nome-associado"?: string;
+    "data-consulta"?: string;
+    "nome-entidade-origem"?: string;
+  };
+  "origem-associado"?: {
+    $?: {
+      nome?: string;
+    };
+    estado?: {
+      $?: {
+        "sigla-uf"?: string;
+      };
+    };
+  };
+};
+
 export const get21ConsultaRealizadaInput = (consultaRealizada: {
   $?: {
     "quantidade-dias-consultados"?: string;
@@ -8,23 +26,9 @@ export const get21ConsultaRealizadaInput = (consultaRealizada: {
       "data-ultima-ocorrencia"?: string;
     };
   };
-  "detalhe-consulta-realizada"?: {
-    $?: {
-      "nome-associado"?: string;
-      "data-consulta"?: string;
-      "nome-entidade-origem"?: string;
-    };
-    "origem-associado"?: {
-      $?: {
-        nome?: string;
-      };
-      estado?: {
-        $?: {
-          "sigla-uf"?: string;
-        };
-      };
-    };
-  }[];
+  "detalhe-consulta-realizada"?:
+    | DetalheConsultaRealizada
+    | DetalheConsultaRealizada[];
 }): {
   "quantidade-dias-consultados"?: string;
   resumo: {
@@ -38,22 +42,32 @@ export const get21ConsultaRealizadaInput = (consultaRealizada: {
     "origem-associado"?: string;
     estado?: string;
   }[];
-} => ({
-  "quantidade-dias-consultados":
-    consultaRealizada?.$?.["quantidade-dias-consultados"],
+} => {
+  const detalhes = consultaRealizada?.["detalhe-consulta-realizada"];
 
-  resumo: {
-    "quantidade-total": consultaRealizada?.resumo?.$?.["quantidade-total"],
-    "data-ultima-ocorrencia":
-      consultaRealizada?.resumo?.$?.["data-ultima-ocorrencia"],
-  },
+  const detalhesArray = Array.isArray(detalhes)
+    ? detalhes
+    : detalhes
+      ? [detalhes]
+      : [];
 
-  "detalhe-consulta-realizada":
-    consultaRealizada?.["detalhe-consulta-realizada"]?.map((i) => ({
+  return {
+    "quantidade-dias-consultados":
+      consultaRealizada?.$?.["quantidade-dias-consultados"],
+
+    resumo: {
+      "quantidade-total":
+        consultaRealizada?.resumo?.$?.["quantidade-total"],
+      "data-ultima-ocorrencia":
+        consultaRealizada?.resumo?.$?.["data-ultima-ocorrencia"],
+    },
+
+    "detalhe-consulta-realizada": detalhesArray.map((i) => ({
       "nome-associado": i.$?.["nome-associado"],
       "data-consulta": i.$?.["data-consulta"],
       "nome-entidade-origem": i.$?.["nome-entidade-origem"],
       "origem-associado": i["origem-associado"]?.$?.nome,
       estado: i["origem-associado"]?.estado?.$?.["sigla-uf"],
-    })) ?? [],
-});
+    })),
+  };
+};
