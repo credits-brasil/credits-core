@@ -252,18 +252,18 @@ export async function spc325UseCase(
             ),
 
           // 12
-          "ultimo-endereco-informado": get12UltimoEnderecoInformadoInput(
-            json["S:Envelope"]["S:Body"]["ns2:resultado"][
-              "ultimo-endereco-informado"
-            ],
-          ),
+          // "ultimo-endereco-informado": get12UltimoEnderecoInformadoInput(
+          //   json["S:Envelope"]["S:Body"]["ns2:resultado"][
+          //     "ultimo-endereco-informado"
+          //   ],
+          // ),
 
           // 10
-          "ultimo-telefone-informado": get10UltimoTelefoneInformadoInput(
-            json["S:Envelope"]["S:Body"]["ns2:resultado"][
-              "ultimo-telefone-informado"
-            ],
-          ),
+          // "ultimo-telefone-informado": get10UltimoTelefoneInformadoInput(
+          //   json["S:Envelope"]["S:Body"]["ns2:resultado"][
+          //     "ultimo-telefone-informado"
+          //   ],
+          // ),
 
           // OPCIONAL
 
