@@ -52,7 +52,7 @@ export async function spcRoutes(server: FastifyInstance) {
   }>("/api/323-spc-mix-mais", spc323Controller);
 
   server.post<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
+    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: string[] };
   }>("/api/325-spc-maxi", spc325Controller);
 
   server.post<{

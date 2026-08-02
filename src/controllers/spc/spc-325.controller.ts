@@ -8,7 +8,7 @@ import { AppError, AppMessages } from "@/constants/spc";
 
 export const spc325Controller = async (
   request: FastifyRequest<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
+    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: string[] };
   }>,
   reply: FastifyReply,
 ) => {

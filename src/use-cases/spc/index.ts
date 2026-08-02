@@ -68,7 +68,7 @@ export class SPCUseCases {
   async spc325(
     document: string,
     typeDocument: "CPF" | "CNPJ",
-    insumos: number[],
+    insumos: string[],
   ) {
     return spc325UseCase(document, typeDocument, insumos);
   }

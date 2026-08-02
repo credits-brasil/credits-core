@@ -7,7 +7,7 @@ interface SPCRequestParams {
   productCode: number;
   tipoConsumidor: "F" | "J";
   document: string;
-  insumos: number[];
+  insumos: Array<string | number>;
 }
 
 export const HTTPSPCService = async ({
