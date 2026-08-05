@@ -178,9 +178,8 @@ export async function spc325UseCase(
       insumos,
     });
 
-    console.log(
-      json["S:Envelope"]["S:Body"]["ns2:resultado"]["spc-score-12-meses"],
-    );
+    console.log(xml, "XML recebido do serviço SPC");
+
 
     const result =
       typeDocument === "CPF"
@@ -198,11 +197,11 @@ export async function spc325UseCase(
             ),
 
             // 68
-            "cheque-consulta-online-srs": get68ChequeConsultaOnlineSRSInput(
-              json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                "cheque-consulta-online-srs"
-              ],
-            ),
+            // "cheque-consulta-online-srs": get68ChequeConsultaOnlineSRSInput(
+            //   json["S:Envelope"]["S:Body"]["ns2:resultado"][
+            //     "cheque-consulta-online-srs"
+            //   ],
+            // ),
 
             // 9
             "cheque-lojista": get9ChequeLojistaInput(
@@ -230,22 +229,22 @@ export async function spc325UseCase(
             ),
 
             // 16
-            "contra-ordem": get16ContraOrdemInput(
-              json["S:Envelope"]["S:Body"]["ns2:resultado"]["contra-ordem"],
-            ),
+            // "contra-ordem": get16ContraOrdemInput(
+            //   json["S:Envelope"]["S:Body"]["ns2:resultado"]["contra-ordem"],
+            // ),
 
             // 27
-            "contra-ordem-documento-diferente":
-              get27ContraOrdemDocumentoDiferenteInput(
-                json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                  "contra-ordem-documento-diferente"
-                ],
-              ),
+            // "contra-ordem-documento-diferente":
+            //   get27ContraOrdemDocumentoDiferenteInput(
+            //     json["S:Envelope"]["S:Body"]["ns2:resultado"][
+            //       "contra-ordem-documento-diferente"
+            //     ],
+            //   ),
 
             // 22
-            contumacia: get22ContumaciaInput(
-              json["S:Envelope"]["S:Body"]["ns2:resultado"]["contumacia"],
-            ),
+            // contumacia: get22ContumaciaInput(
+            //   json["S:Envelope"]["S:Body"]["ns2:resultado"]["contumacia"],
+            // ),
 
             // 20
             "credito-concedido": get20CreditoConcedidoInput(
@@ -276,9 +275,9 @@ export async function spc325UseCase(
             ),
 
             // 2
-            "grafia-pj": get2GrafiaPJInput(
-              json["S:Envelope"]["S:Body"]["ns2:resultado"]["grafia-pj"],
-            ),
+            // "grafia-pj": get2GrafiaPJInput(
+            //   json["S:Envelope"]["S:Body"]["ns2:resultado"]["grafia-pj"],
+            // ),
 
             // 67
             "informacao-poder-judiciario": get67InformacaoPoderJudiciarioInput(
@@ -652,11 +651,11 @@ export async function spc325UseCase(
             ),
 
             // 68
-            "cheque-consulta-online-srs": get68ChequeConsultaOnlineSRSInput(
-              json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                "cheque-consulta-online-srs"
-              ],
-            ),
+            // "cheque-consulta-online-srs": get68ChequeConsultaOnlineSRSInput(
+            //   json["S:Envelope"]["S:Body"]["ns2:resultado"][
+            //     "cheque-consulta-online-srs"
+            //   ],
+            // ),
 
             // 9
             "cheque-lojista": get9ChequeLojistaInput(
@@ -684,22 +683,22 @@ export async function spc325UseCase(
             ),
 
             // 16
-            "contra-ordem": get16ContraOrdemInput(
-              json["S:Envelope"]["S:Body"]["ns2:resultado"]["contra-ordem"],
-            ),
+            // "contra-ordem": get16ContraOrdemInput(
+            //   json["S:Envelope"]["S:Body"]["ns2:resultado"]["contra-ordem"],
+            // ),
 
             // 27
-            "contra-ordem-documento-diferente":
-              get27ContraOrdemDocumentoDiferenteInput(
-                json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                  "contra-ordem-documento-diferente"
-                ],
-              ),
+            // "contra-ordem-documento-diferente":
+            //   get27ContraOrdemDocumentoDiferenteInput(
+            //     json["S:Envelope"]["S:Body"]["ns2:resultado"][
+            //       "contra-ordem-documento-diferente"
+            //     ],
+            //   ),
 
             // 22
-            contumacia: get22ContumaciaInput(
-              json["S:Envelope"]["S:Body"]["ns2:resultado"]["contumacia"],
-            ),
+            // contumacia: get22ContumaciaInput(
+            //   json["S:Envelope"]["S:Body"]["ns2:resultado"]["contumacia"],
+            // ),
 
             // 20
             "credito-concedido": get20CreditoConcedidoInput(
@@ -730,9 +729,9 @@ export async function spc325UseCase(
             ),
 
             // 2
-            "grafia-pj": get2GrafiaPJInput(
-              json["S:Envelope"]["S:Body"]["ns2:resultado"]["grafia-pj"],
-            ),
+            // "grafia-pj": get2GrafiaPJInput(
+            //   json["S:Envelope"]["S:Body"]["ns2:resultado"]["grafia-pj"],
+            // ),
 
             // 67
             "informacao-poder-judiciario": get67InformacaoPoderJudiciarioInput(
