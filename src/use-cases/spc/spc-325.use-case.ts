@@ -1048,7 +1048,7 @@ export async function spc325UseCase(
             }),
           };
 
-    console.log("Resultado do use-case:", result);
+    console.log("Resultado do use-case:", result?.ccf);
 
     return result;
   } catch (error) {
