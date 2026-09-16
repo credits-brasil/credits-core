@@ -1,15 +1,25 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id        String     @id @default(uuid())
+  name      String
+  cpf       String     @unique
+  email     String     @unique
+  password  String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  status    UserStatus @default(ACTIVE)
+
+  @@index([name])
+  @@index([status])
+  @@map("users")
 }
 
 model Order {
@@ -18,15 +28,15 @@ model Order {
   client_id      String
   status         String   @default("PROCESS")
   code           Int
-  type           String //CPF ou CNPJ
+  type           String
   document       String
-  report_id      String // 633
-  report_name    String // SPC + SCORE
-  duration       Int // Tempo de duracao da resposta do fonte "SPC"
-  source         String // SPC CACHE e FINQI  Fontes que vamos buscar as coisas
-  transaction_id String //<protocolo numero="15206658677" digito="6"/>
+  report_id      String
+  report_name    String
+  duration       Int
+  source         String
+  transaction_id String
   origin         String   @default("API")
-  ip             String // Verificar se é o IP do client
+  ip             String
   external_id    String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -35,14 +45,78 @@ model Order {
   @@map("orders")
 }
 
-model Client {
-  id           String   @id
-  name         String
-  ip           Json
-  mounth_limit Int      @default(1000)
-  day_limit    Int      @default(1000)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+model Company {
+  id                     String            @id @default(uuid())
+  cnpj                   String
+  name                   String
+  operator_SPC           String?
+  operator_SPC_password  String?
+  limit_consults_daily   Int               @default(0)
+  limit_consults_monthly Int               @default(0)
+  status                 CompanyStatus     @default(ACTIVE)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  operators              CompanyOperator[]
 
-  @@map("clients")
+  @@index([cnpj])
+  @@index([name])
+  @@index([status])
+  @@map("companies")
+}
+
+model Operator {
+  id        String            @id @default(uuid())
+  user      String            @unique
+  cpf       String
+  name      String
+  password  String
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  email     String            @unique
+  phone     String            @unique
+  companies CompanyOperator[]
+
+  @@index([user])
+  @@index([cpf])
+  @@index([name])
+  @@map("operators")
+}
+
+model CompanyOperator {
+  id         String                @id @default(uuid())
+  companyId  String
+  operatorId String
+  role       OperatorRole          @default(OPERATOR)
+  status     OperatorCompanyStatus @default(ACTIVE)
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+  company    Company               @relation(fields: [companyId], references: [id])
+  operator   Operator              @relation(fields: [operatorId], references: [id])
+
+  @@unique([operatorId, companyId])
+  @@index([operatorId])
+  @@index([companyId])
+  @@map("company_operators")
+}
+
+enum CompanyStatus {
+  ACTIVE
+  INACTIVE
+  DELETED
+}
+
+enum OperatorRole {
+  ADMIN
+  OPERATOR
+}
+
+enum OperatorCompanyStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  DELETED
 }

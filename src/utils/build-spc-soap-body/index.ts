@@ -11,6 +11,7 @@ export const buildSPCSoapBody = ({
   document,
   insumos,
 }: BuildSpc325SoapParams) => {
+  // <numero-protocolo>${productCode}</numero-protocolo>
   const insumosXml = insumos
     .map(
       (codigo) => `<codigo-insumo-opcional>${codigo}</codigo-insumo-opcional>`,
@@ -24,6 +25,7 @@ export const buildSPCSoapBody = ({
       <soapenv:Header/>
       <soapenv:Body>
         <web:filtro>
+          
           <codigo-produto>${productCode}</codigo-produto>
 
           <tipo-consumidor>${tipoConsumidor}</tipo-consumidor>

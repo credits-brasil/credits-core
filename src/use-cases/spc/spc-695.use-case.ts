@@ -9,9 +9,11 @@ export async function spc695UseCase(
   insumos: number[],
 ) {
   const allowedInsumos = new Set([
-    18, 49, 5180, 5262, 5266, 5195, 5194, 5244, 5178, 5185, 5241, 5224, 5227,
+    18, 49, 77, 78, 5180, 5262, 5266, 5195, 5194, 5244, 5178, 5185, 5241, 5224, 5227,
     5239, 5257, 5253, 5142, 5232, 5228, 5229, 5245, 5268,
   ]);
+
+  // 5122, 5256, 5264
 
   const invalidInsumos = insumos.filter(
     (insumo) => !allowedInsumos.has(insumo),
