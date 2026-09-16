@@ -81,7 +81,7 @@ export async function spcRoutes(server: FastifyInstance) {
 
   server.post<{
     Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
-  }>("/api/629-spc-positivo", spc629Controller);
+  }>("/api/629-spc-positivo-intermediario-pj", spc629Controller);
 
   server.get<{
     Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
