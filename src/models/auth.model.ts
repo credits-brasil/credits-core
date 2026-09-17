@@ -20,7 +20,7 @@ export interface AuthVerifyResetCodeBody {
 
 export interface AuthResetUserPasswordBody {
   email: string;
-  code: string;
+  resetToken: string;
   newPassword: string;
 }
 

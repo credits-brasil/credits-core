@@ -88,11 +88,13 @@ model PasswordResetCode {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   code      String
-  expiresAt DateTime
+  resetToken String?          @unique
+  codeExpiresAt DateTime
+  resetTokenExpiresAt DateTime?
   usedAt    DateTime?
   createdAt DateTime @default(now())
 
-  @@index([userId, expiresAt])
+  @@index([userId, codeExpiresAt])
   @@index([userId, usedAt])
   @@map("password_reset_codes")
 }

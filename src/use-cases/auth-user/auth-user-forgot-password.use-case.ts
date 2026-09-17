@@ -1,4 +1,4 @@
-import { randomInt } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 
 import { AppError } from "@/constants/auth";
 import { findUserByEmail } from "@/repositories/user.repository";
@@ -7,6 +7,7 @@ import { sendPasswordResetCode } from "@/services/email.service";
 import { FriendlyError, hashPassword } from "@/utils";
 
 const RESET_CODE_EXPIRATION_MINUTES = 2;
+const RESET_TOKEN_EXPIRATION_MINUTES = 10;
 
 export async function authUserForgotPasswordUseCase(email: string) {
   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
@@ -30,7 +31,7 @@ export async function authUserForgotPasswordUseCase(email: string) {
   }
 
   const token = randomInt(0, 1_000_000).toString().padStart(6, "0");
-  const expiresAt = Date.now() + 1000 * 60 * RESET_CODE_EXPIRATION_MINUTES;
+  const codeExpiresAt = Date.now() + 1000 * 60 * RESET_CODE_EXPIRATION_MINUTES;
 
   await sendPasswordResetCode({
     email: user.email ?? normalizedEmail,
@@ -48,7 +49,9 @@ export async function authUserForgotPasswordUseCase(email: string) {
     data: {
       userId: user.id,
       code: token,
-      expiresAt: new Date(expiresAt),
+      resetToken: null,
+      codeExpiresAt: new Date(codeExpiresAt),
+      resetTokenExpiresAt: null,
     },
   });
 
@@ -72,7 +75,7 @@ export async function verifyUserPasswordResetCode(email: string, code: string) {
       })
     : null;
 
-  if (record?.expiresAt && record.expiresAt.getTime() < Date.now()) {
+  if (record?.codeExpiresAt && record.codeExpiresAt.getTime() < Date.now()) {
     await prisma.passwordResetCode.update({
       where: { id: record.id },
       data: { usedAt: new Date() },
@@ -97,16 +100,26 @@ export async function verifyUserPasswordResetCode(email: string, code: string) {
     });
   }
 
-  return { valid: true };
+  const resetToken = randomUUID();
+  const resetTokenExpiresAt = new Date(
+    Date.now() + 1000 * 60 * RESET_TOKEN_EXPIRATION_MINUTES,
+  );
+
+  await prisma.passwordResetCode.update({
+    where: { id: record.id },
+    data: { resetToken, resetTokenExpiresAt },
+  });
+
+  return { valid: true, resetToken };
 }
 
 export async function resetUserPassword(
   email: string,
-  code: string,
+  resetToken: string,
   newPassword: string,
 ) {
   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
-  const normalizedCode = typeof code === "string" ? code.trim() : "";
+  const normalizedResetToken = typeof resetToken === "string" ? resetToken.trim() : "";
   const normalizedPassword = typeof newPassword === "string" ? newPassword : "";
   const user = await findUserByEmail(normalizedEmail);
 
@@ -119,11 +132,15 @@ export async function resetUserPassword(
   }
 
   const record = await prisma.passwordResetCode.findFirst({
-    where: { userId: user.id, usedAt: null },
+    where: { userId: user.id, usedAt: null, resetToken: normalizedResetToken },
     orderBy: { createdAt: "desc" },
   });
 
-  if (record?.expiresAt && record.expiresAt.getTime() < Date.now()) {
+  if (
+    record &&
+    (!record.resetTokenExpiresAt ||
+      record.resetTokenExpiresAt.getTime() < Date.now())
+  ) {
     await prisma.passwordResetCode.update({
       where: { id: record.id },
       data: { usedAt: new Date() },
@@ -136,7 +153,7 @@ export async function resetUserPassword(
     });
   }
 
-  if (!record || !/^\d{6}$/.test(normalizedCode) || record.code !== normalizedCode) {
+  if (!record || !normalizedResetToken) {
     throw new FriendlyError({
       message: AppError.RESET_TOKEN_INVALID,
       context: "auth.user.resetPassword.invalidCode",
@@ -160,7 +177,10 @@ export async function resetUserPassword(
 
     await transaction.user.update({
       where: { id: user.id },
-      data: { password: hashPassword(normalizedPassword) },
+      data: {
+        password: hashPassword(normalizedPassword),
+        ...(user.email ? { user: null } : {}),
+      },
     });
   });
 

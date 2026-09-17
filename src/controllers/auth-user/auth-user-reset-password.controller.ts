@@ -6,14 +6,14 @@ import { FriendlyError } from "@/utils";
 
 export const authUserResetPasswordController = async (
   request: FastifyRequest<{
-    Body: { email: string; code: string; newPassword: string };
+    Body: { email: string; resetToken: string; newPassword: string };
   }>,
   reply: FastifyReply,
 ) => {
-  const { email, code, newPassword } = request.body ?? {};
+  const { email, resetToken, newPassword } = request.body ?? {};
 
   try {
-    const result = await resetUserPassword(email, code, newPassword);
+    const result = await resetUserPassword(email, resetToken, newPassword);
 
     return reply.code(200).send({ statusCode: 200, ...result });
   } catch (error: unknown) {
@@ -23,6 +23,8 @@ export const authUserResetPasswordController = async (
         message: error.message,
       });
     }
+
+    console.error("[auth.user.resetPassword]", error);
 
     return reply.code(500).send({
       statusCode: 500,
