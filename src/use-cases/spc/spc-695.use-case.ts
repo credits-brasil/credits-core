@@ -77,7 +77,7 @@ export async function spc695UseCase(
     ],
     CNPJ: [
       5244, 5178, 5185, 5241, 5224, 5227, 5229, 5245, 5256, 5257, 18, 49, 77,
-      78, 5247, 5179, 5265, 5267, 24, 23, 5186,
+      5247, 5179, 5265, 5267, 24, 23, 5186,
     ],
   } as const;
 
@@ -102,9 +102,14 @@ export async function spc695UseCase(
     });
     const resultado = json?.["S:Envelope"]?.["S:Body"]?.["ns2:resultado"];
 
-    if (!resultado || typeof resultado !== "object" || Array.isArray(resultado)) {
+    if (
+      !resultado ||
+      typeof resultado !== "object" ||
+      Array.isArray(resultado)
+    ) {
       throw new FriendlyError({
-        message: "Resposta inválida do SPC Mais: resultado ausente ou inválido.",
+        message:
+          "Resposta inválida do SPC Mais: resultado ausente ou inválido.",
         context: "spc695UseCase.response",
         code: 502,
       });
@@ -133,7 +138,8 @@ export async function spc695UseCase(
             ),
             consumidor: convertSPCInput(
               get1ConsumidorInput,
-              resultado.consumidor, typeDocument,
+              resultado.consumidor,
+              typeDocument,
             ),
 
             "credito-concedido": convertSPCInput(
@@ -167,11 +173,10 @@ export async function spc695UseCase(
               get3TelefoneConsultadoInput,
               resultado["telefone-consultado"],
             ),
-            "telefone-vinculado-assinante-consultado":
-              convertSPCInput(
-                get44TelefoneVinculadoAssinanteConsultadoInput,
-                resultado["telefone-vinculado-assinante-consultado"],
-              ),
+            "telefone-vinculado-assinante-consultado": convertSPCInput(
+              get44TelefoneVinculadoAssinanteConsultadoInput,
+              resultado["telefone-vinculado-assinante-consultado"],
+            ),
 
             ...(insumos.includes(5262) && {
               "alerta-identidade-fraude": convertSPCInput(
@@ -198,11 +203,10 @@ export async function spc695UseCase(
               ),
             }),
             ...(insumos.includes(5194) && {
-              "comprometimento-renda-mensal-pf":
-                convertSPCInput(
-                  get5194ComprometimentoRendaMensalPfInput,
-                  resultado["comprometimento-renda-mensal-pf"],
-                ),
+              "comprometimento-renda-mensal-pf": convertSPCInput(
+                get5194ComprometimentoRendaMensalPfInput,
+                resultado["comprometimento-renda-mensal-pf"],
+              ),
             }),
             ...(insumos.includes(5241) && {
               "grupo-economico": convertSPCInput(
@@ -211,11 +215,10 @@ export async function spc695UseCase(
               ),
             }),
             ...(insumos.includes(5224) && {
-              "indice-comportamento-gastos-cadastro-positivo":
-                convertSPCInput(
-                  get5224IndiceComportamentoGastosCadastroPositivoInput,
-                  resultado["indice-comportamento-gastos-cadastro-positivo"],
-                ),
+              "indice-comportamento-gastos-cadastro-positivo": convertSPCInput(
+                get5224IndiceComportamentoGastosCadastroPositivoInput,
+                resultado["indice-comportamento-gastos-cadastro-positivo"],
+              ),
             }),
             ...(insumos.includes(5227) && {
               "indice-pontualidade-pagamento-cadastro-positivo":
@@ -257,11 +260,10 @@ export async function spc695UseCase(
               ),
             }),
             ...(insumos.includes(5257) && {
-              "insumo-historico-operacao-scr":
-                convertSPCInput(
-                  get5257InsumoHistoricoOperacaoSCRInput,
-                  resultado["insumo-historico-operacao-scr"],
-                ),
+              "insumo-historico-operacao-scr": convertSPCInput(
+                get5257InsumoHistoricoOperacaoSCRInput,
+                resultado["insumo-historico-operacao-scr"],
+              ),
             }),
 
             ...(insumos.includes(18) && {
@@ -269,11 +271,10 @@ export async function spc695UseCase(
             }),
 
             ...(insumos.includes(5253) && {
-              "insumo-score-mais-positivo-financeiro":
-                convertSPCInput(
-                  get5253ScoreMaisPositivoFinanceiroInput,
-                  resultado["insumo-score-mais-positivo-financeiro"],
-                ),
+              "insumo-score-mais-positivo-financeiro": convertSPCInput(
+                get5253ScoreMaisPositivoFinanceiroInput,
+                resultado["insumo-score-mais-positivo-financeiro"],
+              ),
             }),
 
             ...(insumos.includes(5264) && {
@@ -283,11 +284,10 @@ export async function spc695UseCase(
               ),
             }),
             ...(insumos.includes(5239) && {
-              "insumo-classificacao-risco-debitos-ativos":
-                convertSPCInput(
-                  get5239ClassificacaoRiscoDebitosAtivosInput,
-                  resultado["insumo-classificacao-risco-debitos-ativos"],
-                ),
+              "insumo-classificacao-risco-debitos-ativos": convertSPCInput(
+                get5239ClassificacaoRiscoDebitosAtivosInput,
+                resultado["insumo-classificacao-risco-debitos-ativos"],
+              ),
             }),
             ...(insumos.includes(77) && {
               "spc-score-3-meses": convertSPCInput(
@@ -331,7 +331,8 @@ export async function spc695UseCase(
             ),
             consumidor: convertSPCInput(
               get1ConsumidorInput,
-              resultado.consumidor, typeDocument,
+              resultado.consumidor,
+              typeDocument,
             ),
 
             "credito-concedido": convertSPCInput(
@@ -365,11 +366,10 @@ export async function spc695UseCase(
               get3TelefoneConsultadoInput,
               resultado["telefone-consultado"],
             ),
-            "telefone-vinculado-assinante-consultado":
-              convertSPCInput(
-                get44TelefoneVinculadoAssinanteConsultadoInput,
-                resultado["telefone-vinculado-assinante-consultado"],
-              ),
+            "telefone-vinculado-assinante-consultado": convertSPCInput(
+              get44TelefoneVinculadoAssinanteConsultadoInput,
+              resultado["telefone-vinculado-assinante-consultado"],
+            ),
 
             ...(insumos.includes(5244) && {
               "divida-publica-cadin": convertSPCInput(
@@ -396,11 +396,10 @@ export async function spc695UseCase(
               ),
             }),
             ...(insumos.includes(5224) && {
-              "indice-comportamento-gastos-cadastro-positivo":
-                convertSPCInput(
-                  get5224IndiceComportamentoGastosCadastroPositivoInput,
-                  resultado["indice-comportamento-gastos-cadastro-positivo"],
-                ),
+              "indice-comportamento-gastos-cadastro-positivo": convertSPCInput(
+                get5224IndiceComportamentoGastosCadastroPositivoInput,
+                resultado["indice-comportamento-gastos-cadastro-positivo"],
+              ),
             }),
             ...(insumos.includes(5227) && {
               "indice-pontualidade-pagamento-cadastro-positivo":
@@ -411,7 +410,10 @@ export async function spc695UseCase(
             }),
 
             ...(insumos.includes(5229) && {
-              "score-pj": convertSPCInput(get5229ScorePJInput, resultado["score-pj"]),
+              "score-pj": convertSPCInput(
+                get5229ScorePJInput,
+                resultado["score-pj"],
+              ),
             }),
             ...(insumos.includes(5245) && {
               "score-recuperacao-pj": convertSPCInput(
@@ -427,11 +429,10 @@ export async function spc695UseCase(
               ),
             }),
             ...(insumos.includes(5257) && {
-              "insumo-historico-operacao-scr":
-                convertSPCInput(
-                  get5257InsumoHistoricoOperacaoSCRInput,
-                  resultado["insumo-historico-operacao-scr"],
-                ),
+              "insumo-historico-operacao-scr": convertSPCInput(
+                get5257InsumoHistoricoOperacaoSCRInput,
+                resultado["insumo-historico-operacao-scr"],
+              ),
             }),
 
             ...(insumos.includes(18) && {
@@ -451,12 +452,12 @@ export async function spc695UseCase(
                 resultado["spc-score-3-meses"],
               ),
             }),
-            ...(insumos.includes(78) && {
-              "spc-score-12-meses": convertSPCInput(
-                get78SPCScore12MesesInput,
-                resultado["spc-score-12-meses"],
-              ),
-            }),
+
+            "spc-score-12-meses": convertSPCInput(
+              get78SPCScore12MesesInput,
+              resultado["spc-score-12-meses"],
+            ),
+
             ...(insumos.includes(5247) && {
               "score-pj-mei": convertSPCInput(
                 get5247ScorePJMEIInput,
