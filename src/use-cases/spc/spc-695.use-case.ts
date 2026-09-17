@@ -142,6 +142,11 @@ export async function spc695UseCase(
               typeDocument,
             ),
 
+             "spc-score-12-meses": convertSPCInput(
+              get78SPCScore12MesesInput,
+              resultado["spc-score-12-meses"],
+            ),
+
             "credito-concedido": convertSPCInput(
               get20CreditoConcedidoInput,
               resultado["credito-concedido"],
