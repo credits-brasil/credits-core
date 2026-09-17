@@ -75,6 +75,9 @@ export async function spc629UseCase(
     });
 
     return {
+      protocolo: json["S:Envelope"]["S:Body"]["ns2:resultado"].protocolo?.$,
+      operador: json["S:Envelope"]["S:Body"]["ns2:resultado"].operador?.$,
+      
       // DEFAULT
 
       // 49
