@@ -39,7 +39,7 @@ test('email login normalizes email, preserves password, and returns user compani
     assert.equal(where.status.not, 'INACTIVE');
     return [{ role: 'USER', status: 'ACTIVE', company: { id: 'company-1', name: 'Company', cnpj: '00000000000000' } }];
   });
-  const response = await server.inject({ method: 'POST', url: '/api/user/login', payload: { email: ' TEST@EXAMPLE.COM ', password } });
+  const response = await server.inject({ method: 'POST', url: '/api/auth/user/login', payload: { email: ' TEST@EXAMPLE.COM ', password } });
   assert.equal(response.statusCode, 200);
   const { session } = response.json();
   assert.equal(session.user.id, record.id);
@@ -49,18 +49,29 @@ test('email login normalizes email, preserves password, and returns user compani
   assert.ok(!('admin' in session));
 });
 
+test('first access users are blocked before the session is created', async (t) => {
+  const server = await app(t);
+  mockMethod(t, prisma.user, 'findFirst', async () => ({ ...record, firstAccess: true }));
+  mockMethod(t, prisma.companyUser, 'findMany', async () => { throw Error('Must not create a session'); });
+
+  const response = await server.inject({ method: 'POST', url: '/api/auth/user/login', payload: { email: record.email, password } });
+
+  assert.equal(response.statusCode, 403);
+  assert.match(response.json().message, /Primeiro acesso/i);
+});
+
 test('wrong passwords, unknown emails and malformed hashes return 401', async (t) => {
   const server = await app(t);
   let stored = record;
   mockMethod(t, prisma.user, 'findFirst', async () => stored);
   mockMethod(t, prisma.companyUser, 'findMany', async () => { throw Error('Must not create a session'); });
   for (const wrongPassword of ['123', password.trim(), ' Other!123 ']) {
-    const response = await server.inject({ method: 'POST', url: '/api/user/login', payload: { email: record.email, password: wrongPassword } });
+    const response = await server.inject({ method: 'POST', url: '/api/auth/user/login', payload: { email: record.email, password: wrongPassword } });
     assert.equal(response.statusCode, 401);
   }
   for (const invalidRecord of [null, { ...record, password: 'salt:zz' }, { ...record, password }]) {
     stored = invalidRecord;
-    const response = await server.inject({ method: 'POST', url: '/api/user/login', payload: { email: record.email, password } });
+    const response = await server.inject({ method: 'POST', url: '/api/auth/user/login', payload: { email: record.email, password } });
     assert.equal(response.statusCode, 401);
   }
 });
@@ -69,7 +80,7 @@ test('missing or invalid credentials and CPF-only login return 400 before databa
   const server = await app(t);
   mockMethod(t, prisma.user, 'findFirst', async () => { throw Error('Unexpected database query'); });
   for (const payload of [{}, { cpf: record.cpf, password }, { email: 123, password }, { email: record.email, password: 123 }, { email: ' ', password }, { email: record.email, password: '' }]) {
-    const response = await server.inject({ method: 'POST', url: '/api/user/login', payload });
+    const response = await server.inject({ method: 'POST', url: '/api/auth/user/login', payload });
     assert.equal(response.statusCode, 400);
   }
 });

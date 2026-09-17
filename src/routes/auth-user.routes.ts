@@ -1,12 +1,14 @@
 import { FastifyInstance } from "fastify";
 
 import {
+  authUserFirstAccessPasswordController,
   authUserForgotPasswordController,
   authUserLoginController,
   authUserResetPasswordController,
   authUserVerifyResetCodeController,
 } from "@/controllers/auth-user";
 import {
+  AuthFirstAccessPasswordBody,
   AuthForgotPasswordBody,
   AuthLoginBody,
   AuthResetUserPasswordBody,
@@ -29,4 +31,9 @@ export async function authUserRoutes(server: FastifyInstance) {
   server.post<{
     Body: AuthResetUserPasswordBody;
   }>("/api/auth/user/reset-password", authUserResetPasswordController);
+
+  server.post<{ Body: AuthFirstAccessPasswordBody }>(
+    "/api/auth/user/first-access/change-password",
+    authUserFirstAccessPasswordController,
+  );
 }

@@ -84,6 +84,14 @@ export async function authUserLoginUseCase(email: string, password: string) {
     });
   }
 
+  if (user.firstAccess) {
+    throw new FriendlyError({
+      message: "Primeiro acesso: altere sua senha para continuar.",
+      context: "auth.user.login.firstAccess",
+      code: 403,
+    });
+  }
+
   return createSession(user);
 }
 

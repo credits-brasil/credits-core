@@ -67,17 +67,18 @@ model Company {
 }
 
 model User {
-  id                 String              @id @default(uuid())
-  user               String?             @unique
-  cpf                String
-  name               String
-  password           String
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  email              String?             @unique
-  phone              String              @unique
-  companies          CompanyUser[]
-  passwordResets     PasswordResetCode[]
+  id             String              @id @default(uuid())
+  user           String?             @unique
+  cpf            String
+  name           String
+  password       String
+  firstAccess    Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  email          String?             @unique
+  phone          String              @unique
+  companies      CompanyUser[]
+  passwordResets PasswordResetCode[]
 
   @@index([user])
   @@index([cpf])
@@ -91,20 +92,20 @@ enum PasswordResetTarget {
 }
 
 model PasswordResetCode {
-  id                  String             @id @default(uuid())
+  id                  String              @id @default(uuid())
   adminId             String?
   userId              String?
   target              PasswordResetTarget
   code                String
-  resetToken          String?            @unique
+  resetToken          String?             @unique
   codeExpiresAt       DateTime
   resetTokenExpiresAt DateTime?
-  attempts            Int                @default(0)
+  attempts            Int                 @default(0)
   usedAt              DateTime?
-  createdAt           DateTime           @default(now())
+  createdAt           DateTime            @default(now())
 
-  admin               Admin?             @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  user                User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin Admin? @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([adminId, codeExpiresAt])
   @@index([userId, codeExpiresAt])
