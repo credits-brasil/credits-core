@@ -6,18 +6,6 @@ import {
 } from "@/repositories/company.repository";
 import { FriendlyError } from "@/utils";
 
-function normalizeDateInput(value?: string | Date | null) {
-  if (!value) {
-    return undefined;
-  }
-
-  if (value instanceof Date) {
-    return value;
-  }
-
-  return new Date(value.includes("T") ? value : `${value}T00:00:00.000Z`);
-}
-
 export async function companyCreateUseCase(input: CreateCompanyInput) {
   const cnpj = input.cnpj?.trim();
   const name = input.name?.trim();
@@ -48,7 +36,5 @@ export async function companyCreateUseCase(input: CreateCompanyInput) {
     name,
     operator_SPC,
     operator_SPC_password,
-    tasting_start_date: normalizeDateInput(input.tasting_start_date),
-    tasting_end_date: normalizeDateInput(input.tasting_end_date),
   });
 }

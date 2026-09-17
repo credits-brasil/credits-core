@@ -3,11 +3,8 @@ export interface CompanyCreateBody {
   name: string;
   operator_SPC?: string;
   operator_SPC_password?: string;
-  limit_consults?: number;
-  period_limit_consults?: "DAILY" | "WEEKLY" | "MONTHLY";
-  tasting_product_quantity?: number;
-  tasting_start_date?: string;
-  tasting_end_date?: string;
+  limit_consults_daily?: number;
+  limit_consults_monthly?: number;
 }
 
 export interface CompanyUpdateBody {
@@ -15,11 +12,8 @@ export interface CompanyUpdateBody {
   name?: string;
   operator_SPC?: string;
   operator_SPC_password?: string;
-  limit_consults?: number;
-  period_limit_consults?: "DAILY" | "WEEKLY" | "MONTHLY";
-  tasting_product_quantity?: number;
-  tasting_start_date?: string;
-  tasting_end_date?: string;
+  limit_consults_daily?: number;
+  limit_consults_monthly?: number;
   status?: "ACTIVE" | "INACTIVE";
 }
 

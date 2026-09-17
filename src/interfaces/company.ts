@@ -1,15 +1,12 @@
-import { CompanyPeriod, CompanyStatus } from "../generated/prisma/enums";
+import { CompanyStatus } from "../generated/prisma/enums";
 
 export interface CreateCompanyInput {
   cnpj: string;
   name: string;
   operator_SPC?: string;
   operator_SPC_password?: string;
-  limit_consults?: number;
-  period_limit_consults?: CompanyPeriod;
-  tasting_product_quantity?: number;
-  tasting_start_date?: Date | string | null;
-  tasting_end_date?: Date | string | null;
+  limit_consults_daily?: number;
+  limit_consults_monthly?: number;
 }
 
 export interface UpdateCompanyInput {
@@ -17,10 +14,7 @@ export interface UpdateCompanyInput {
   name?: string;
   operator_SPC?: string;
   operator_SPC_password?: string;
-  limit_consults?: number;
-  period_limit_consults?: CompanyPeriod;
-  tasting_product_quantity?: number;
-  tasting_start_date?: Date | string | null;
-  tasting_end_date?: Date | string | null;
+  limit_consults_daily?: number;
+  limit_consults_monthly?: number;
   status?: CompanyStatus;
 }
