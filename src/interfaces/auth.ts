@@ -24,6 +24,12 @@ export interface ResetPasswordAuthInput {
   newPassword: string;
 }
 
+export interface FirstAccessPasswordAuthInput {
+  email: string;
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface AuthAdmin {
   id: string;
   name: string;

@@ -2,22 +2,22 @@ import { FastifyReply, FastifyRequest } from "fastify";
 
 import { AppError, AppMessages } from "@/constants/auth";
 import { FriendlyError } from "@/utils";
-import { authResetPasswordUseCase } from "@/use-cases/auth-admin";
+import { authFirstAccessPasswordUseCase } from "@/use-cases/auth-admin";
 
-export const authResetPasswordController = async (
+export const authFirstAccessPasswordController = async (
   request: FastifyRequest<{
-    Body: { email: string; token: string; newPassword: string };
+    Body: { email: string; currentPassword: string; newPassword: string };
   }>,
   reply: FastifyReply,
 ) => {
-  const { email, token, newPassword } = request.body ?? {};
+  const { email, currentPassword, newPassword } = request.body ?? {};
 
   try {
-    const admin = await authResetPasswordUseCase(email, token, newPassword);
+    const admin = await authFirstAccessPasswordUseCase(email, currentPassword, newPassword);
 
     return reply.code(200).send({
       statusCode: 200,
-      message: AppMessages.PASSWORD_RESET_SUCCESS,
+      message: AppMessages.FIRST_ACCESS_PASSWORD_SUCCESS,
       admin,
     });
   } catch (error: unknown) {
@@ -28,7 +28,7 @@ export const authResetPasswordController = async (
       });
     }
 
-    request.log.error({ err: error }, "Admin password recovery failed");
+    request.log.error({ err: error }, "Admin first-access password change failed");
 
     return reply.code(500).send({
       statusCode: 500,

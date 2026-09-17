@@ -53,11 +53,27 @@ export async function authLoginUseCase(email: string, password: string) {
 
   const admin = await findAdminByEmail(normalizedEmail);
 
-  if (!admin || admin.status === "INACTIVE" || admin.status === "DELETED" || !verifyPassword(normalizedPassword, admin.password)) {
+  if (!admin || admin.status === "INACTIVE" || admin.status === "DELETED") {
     throw new FriendlyError({
       message: AppError.INVALID_CREDENTIALS,
       context: "auth.login.credentials",
       code: 401,
+    });
+  }
+
+  if (!verifyPassword(normalizedPassword, admin.password)) {
+    throw new FriendlyError({
+      message: AppError.INVALID_CREDENTIALS,
+      context: "auth.login.credentials",
+      code: 401,
+    });
+  }
+
+  if (admin.firstAccess) {
+    throw new FriendlyError({
+      message: "Primeiro acesso: altere sua senha para continuar.",
+      context: "auth.login.firstAccess",
+      code: 403,
     });
   }
 

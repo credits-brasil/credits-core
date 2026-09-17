@@ -10,7 +10,7 @@ export const authForgotPasswordController = async (
   }>,
   reply: FastifyReply,
 ) => {
-  const { email } = request.body;
+  const { email } = request.body ?? {};
 
   try {
     const reset = await authForgotPasswordUseCase(email);
@@ -27,6 +27,8 @@ export const authForgotPasswordController = async (
         message: error.message,
       });
     }
+
+    request.log.error({ err: error }, "Admin password recovery failed");
 
     return reply.code(500).send({
       statusCode: 500,

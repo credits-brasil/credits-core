@@ -8,14 +8,16 @@ datasource db {
 }
 
 model Admin {
-  id        String      @id @default(uuid())
-  name      String
-  cpf       String      @unique
-  email     String      @unique
-  password  String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  status    AdminStatus @default(ACTIVE)
+  id             String              @id @default(uuid())
+  name           String
+  cpf            String              @unique
+  email          String              @unique
+  password       String
+  firstAccess    Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  status         AdminStatus         @default(ACTIVE)
+  passwordResets PasswordResetCode[]
 
   @@index([name])
   @@index([status])
@@ -65,17 +67,17 @@ model Company {
 }
 
 model User {
-  id        String        @id @default(uuid())
-  user      String?       @unique
-  cpf       String
-  name      String
-  password  String
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  email     String?       @unique
-  phone     String        @unique
-  companies CompanyUser[]
-  passwordResetCodes PasswordResetCode[]
+  id                 String              @id @default(uuid())
+  user               String?             @unique
+  cpf                String
+  name               String
+  password           String
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  email              String?             @unique
+  phone              String              @unique
+  companies          CompanyUser[]
+  passwordResets     PasswordResetCode[]
 
   @@index([user])
   @@index([cpf])
@@ -83,19 +85,30 @@ model User {
   @@map("users")
 }
 
-model PasswordResetCode {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  code      String
-  resetToken String?          @unique
-  codeExpiresAt DateTime
-  resetTokenExpiresAt DateTime?
-  usedAt    DateTime?
-  createdAt DateTime @default(now())
+enum PasswordResetTarget {
+  ADMIN
+  USER
+}
 
+model PasswordResetCode {
+  id                  String             @id @default(uuid())
+  adminId             String?
+  userId              String?
+  target              PasswordResetTarget
+  code                String
+  resetToken          String?            @unique
+  codeExpiresAt       DateTime
+  resetTokenExpiresAt DateTime?
+  attempts            Int                @default(0)
+  usedAt              DateTime?
+  createdAt           DateTime           @default(now())
+
+  admin               Admin?             @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  user                User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([adminId, codeExpiresAt])
   @@index([userId, codeExpiresAt])
-  @@index([userId, usedAt])
+  @@index([target, createdAt])
   @@map("password_reset_codes")
 }
 

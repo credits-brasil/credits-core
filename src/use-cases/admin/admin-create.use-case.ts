@@ -5,6 +5,7 @@ import {
   createAdmin,
   findAdminByEmailOrCpf,
 } from "@/repositories/admin.repository";
+import { sendAdminWelcomeEmail } from "@/services/email.service";
 
 export async function adminCreateUseCase(input: CreateAdminInput) {
   const name = input.name?.trim();
@@ -30,5 +31,24 @@ export async function adminCreateUseCase(input: CreateAdminInput) {
     });
   }
 
-  return createAdmin({ name, cpf, email, password: hashPassword(password) });
+  const admin = await createAdmin({
+    name,
+    cpf,
+    email,
+    password: hashPassword(password),
+    firstAccess: true,
+  });
+
+  try {
+    await sendAdminWelcomeEmail({
+      email: admin.email,
+      name: admin.name,
+      temporaryPassword: password,
+      loginUrl: process.env.FRONTEND_URL || "https://credits-platform-manager.vercel.app",
+    });
+  } catch (error) {
+    console.error("Failed to send admin welcome email", error);
+  }
+
+  return admin;
 }

@@ -41,17 +41,21 @@ export async function authUserForgotPasswordUseCase(email: string) {
   });
 
   await prisma.passwordResetCode.updateMany({
-    where: { userId: user.id, usedAt: null },
+    where: { userId: user.id, usedAt: null, target: "USER" },
     data: { usedAt: new Date() },
   });
 
   await prisma.passwordResetCode.create({
     data: {
       userId: user.id,
+      adminId: null,
+      target: "USER",
       code: token,
       resetToken: null,
       codeExpiresAt: new Date(codeExpiresAt),
       resetTokenExpiresAt: null,
+      attempts: 0,
+      usedAt: null,
     },
   });
 
@@ -70,7 +74,7 @@ export async function verifyUserPasswordResetCode(email: string, code: string) {
   const user = await findUserByEmail(normalizedEmail);
   const record = user
     ? await prisma.passwordResetCode.findFirst({
-        where: { userId: user.id, usedAt: null },
+        where: { userId: user.id, usedAt: null, target: "USER" },
         orderBy: { createdAt: "desc" },
       })
     : null;
@@ -107,7 +111,7 @@ export async function verifyUserPasswordResetCode(email: string, code: string) {
 
   await prisma.passwordResetCode.update({
     where: { id: record.id },
-    data: { resetToken, resetTokenExpiresAt },
+    data: { resetToken, resetTokenExpiresAt, attempts: 0 },
   });
 
   return { valid: true, resetToken };
@@ -132,7 +136,12 @@ export async function resetUserPassword(
   }
 
   const record = await prisma.passwordResetCode.findFirst({
-    where: { userId: user.id, usedAt: null, resetToken: normalizedResetToken },
+    where: {
+      userId: user.id,
+      usedAt: null,
+      target: "USER",
+      resetToken: normalizedResetToken,
+    },
     orderBy: { createdAt: "desc" },
   });
 

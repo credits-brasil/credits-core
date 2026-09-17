@@ -5,6 +5,7 @@ export interface CreateAdminInput {
   cpf: string;
   email: string;
   password?: string;
+  firstAccess?: boolean;
 }
 
 export interface UpdateAdminInput {
@@ -13,4 +14,5 @@ export interface UpdateAdminInput {
   email?: string;
   password?: string;
   status?: AdminStatus;
+  firstAccess?: boolean;
 }

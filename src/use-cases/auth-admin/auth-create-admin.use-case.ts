@@ -65,6 +65,7 @@ export async function authCreateAdminUseCase(
     cpf: normalizedCpf,
     email: normalizedEmail,
     password: hashPassword(normalizedPassword),
+    firstAccess: true,
   });
 
   return toAuthAdmin(admin);

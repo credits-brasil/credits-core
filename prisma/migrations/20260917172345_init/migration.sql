@@ -1,22 +1,17 @@
-BEGIN;
+-- CreateEnum
+CREATE TYPE "PasswordResetTarget" AS ENUM ('ADMIN', 'USER');
 
--- Reuse enums left in the existing database; also support a fresh database.
-DO $$ BEGIN
-  CREATE TYPE "CompanyStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-DO $$ BEGIN
-  CREATE TYPE "OperatorRole" AS ENUM ('ADMIN', 'OPERATOR');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-DO $$ BEGIN
-  CREATE TYPE "OperatorCompanyStatus" AS ENUM ('ACTIVE', 'INACTIVE');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-DO $$ BEGIN
-  CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+-- CreateEnum
+CREATE TYPE "CompanyStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
+
+-- CreateEnum
+CREATE TYPE "OperatorRole" AS ENUM ('ADMIN', 'OPERATOR');
+
+-- CreateEnum
+CREATE TYPE "OperatorCompanyStatus" AS ENUM ('ACTIVE', 'INACTIVE');
+
+-- CreateEnum
+CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
 
 -- CreateTable
 CREATE TABLE "admins" (
@@ -25,6 +20,7 @@ CREATE TABLE "admins" (
     "cpf" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
+    "firstAccess" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "status" "UserStatus" NOT NULL DEFAULT 'ACTIVE',
@@ -74,16 +70,33 @@ CREATE TABLE "companies" (
 -- CreateTable
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
-    "user" TEXT NOT NULL,
+    "user" TEXT,
     "cpf" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "email" TEXT NOT NULL,
+    "email" TEXT,
     "phone" TEXT NOT NULL,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "password_reset_codes" (
+    "id" TEXT NOT NULL,
+    "adminId" TEXT,
+    "userId" TEXT,
+    "target" "PasswordResetTarget" NOT NULL,
+    "code" TEXT NOT NULL,
+    "resetToken" TEXT,
+    "codeExpiresAt" TIMESTAMP(3) NOT NULL,
+    "resetTokenExpiresAt" TIMESTAMP(3),
+    "attempts" INTEGER NOT NULL DEFAULT 0,
+    "usedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "password_reset_codes_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -142,6 +155,18 @@ CREATE INDEX "users_cpf_idx" ON "users"("cpf");
 CREATE INDEX "users_name_idx" ON "users"("name");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "password_reset_codes_resetToken_key" ON "password_reset_codes"("resetToken");
+
+-- CreateIndex
+CREATE INDEX "password_reset_codes_adminId_codeExpiresAt_idx" ON "password_reset_codes"("adminId", "codeExpiresAt");
+
+-- CreateIndex
+CREATE INDEX "password_reset_codes_userId_codeExpiresAt_idx" ON "password_reset_codes"("userId", "codeExpiresAt");
+
+-- CreateIndex
+CREATE INDEX "password_reset_codes_target_createdAt_idx" ON "password_reset_codes"("target", "createdAt");
+
+-- CreateIndex
 CREATE INDEX "company_users_operatorId_idx" ON "company_users"("operatorId");
 
 -- CreateIndex
@@ -151,9 +176,13 @@ CREATE INDEX "company_users_companyId_idx" ON "company_users"("companyId");
 CREATE UNIQUE INDEX "company_users_operatorId_companyId_key" ON "company_users"("operatorId", "companyId");
 
 -- AddForeignKey
+ALTER TABLE "password_reset_codes" ADD CONSTRAINT "password_reset_codes_adminId_fkey" FOREIGN KEY ("adminId") REFERENCES "admins"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "password_reset_codes" ADD CONSTRAINT "password_reset_codes_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "company_users" ADD CONSTRAINT "company_users_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "company_users" ADD CONSTRAINT "company_users_operatorId_fkey" FOREIGN KEY ("operatorId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
-COMMIT;

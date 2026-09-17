@@ -29,3 +29,9 @@ export interface AuthResetPasswordBody {
   token: string;
   newPassword: string;
 }
+
+export interface AuthFirstAccessPasswordBody {
+  email: string;
+  currentPassword: string;
+  newPassword: string;
+}

@@ -14,4 +14,5 @@ export enum AppMessages {
   LOGIN_SUCCESS = "Login realizado com sucesso.",
   PASSWORD_RESET_TOKEN_SUCCESS = "Token de redefinição gerado com sucesso.",
   PASSWORD_RESET_SUCCESS = "Senha redefinida com sucesso.",
+  FIRST_ACCESS_PASSWORD_SUCCESS = "Senha inicial atualizada com sucesso.",
 }

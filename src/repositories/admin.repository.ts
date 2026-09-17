@@ -10,6 +10,7 @@ const safeSelect = {
   cpf: true,
   email: true,
   status: true,
+  firstAccess: true,
   createdAt: true,
   updatedAt: true,
 } as const;
