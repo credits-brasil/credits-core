@@ -22,7 +22,7 @@ const normalizeUserRole = (role?: "ADMIN" | "USER" | "OPERATOR") => {
 
 export async function userCreateUseCase(
   companyId: string,
-  input: { user?: string; name: string; cpf: string; email?: string; phone: string; password?: string; role?: "ADMIN" | "USER"; status?: "ACTIVE" | "INACTIVE" },
+  input: { user?: string; name: string; cpf: string; email?: string; phone: string; password?: string; role?: "ADMIN" | "USER" | "OPERATOR"; status?: "ACTIVE" | "INACTIVE" },
 ) {
   const company = await findCompanyById(companyId);
   const normalizedRole = normalizeUserRole(input.role);

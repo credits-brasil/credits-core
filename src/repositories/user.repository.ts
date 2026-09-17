@@ -113,7 +113,7 @@ export const updateCompanyUser = (id: string, data: { role?: string; status?: st
 export const softDeleteCompanyUser = (id: string) => {
   return prisma.companyUser.update({
     where: { id },
-    data: { status: "INACTIVE" },
+    data: { status: "DELETED" },
     select: safeSelect,
   });
 };

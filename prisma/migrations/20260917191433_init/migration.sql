@@ -5,13 +5,13 @@ CREATE TYPE "PasswordResetTarget" AS ENUM ('ADMIN', 'USER');
 CREATE TYPE "CompanyStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
 
 -- CreateEnum
-CREATE TYPE "OperatorRole" AS ENUM ('ADMIN', 'OPERATOR');
+CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'USER');
 
 -- CreateEnum
-CREATE TYPE "OperatorCompanyStatus" AS ENUM ('ACTIVE', 'INACTIVE');
+CREATE TYPE "UserCompanyStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
 
 -- CreateEnum
-CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
+CREATE TYPE "AdminStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
 
 -- CreateTable
 CREATE TABLE "admins" (
@@ -23,7 +23,7 @@ CREATE TABLE "admins" (
     "firstAccess" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "status" "UserStatus" NOT NULL DEFAULT 'ACTIVE',
+    "status" "AdminStatus" NOT NULL DEFAULT 'ACTIVE',
 
     CONSTRAINT "admins_pkey" PRIMARY KEY ("id")
 );
@@ -105,8 +105,8 @@ CREATE TABLE "company_users" (
     "id" TEXT NOT NULL,
     "companyId" TEXT NOT NULL,
     "operatorId" TEXT NOT NULL,
-    "role" "OperatorRole" NOT NULL DEFAULT 'OPERATOR',
-    "status" "OperatorCompanyStatus" NOT NULL DEFAULT 'ACTIVE',
+    "role" "UserRole" NOT NULL DEFAULT 'USER',
+    "status" "UserCompanyStatus" NOT NULL DEFAULT 'ACTIVE',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

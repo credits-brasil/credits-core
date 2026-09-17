@@ -94,7 +94,9 @@ enum PasswordResetTarget {
 model PasswordResetCode {
   id                  String              @id @default(uuid())
   adminId             String?
+  admin               Admin?              @relation(fields: [adminId], references: [id], onDelete: Cascade)
   userId              String?
+  user                User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
   target              PasswordResetTarget
   code                String
   resetToken          String?             @unique
@@ -103,9 +105,6 @@ model PasswordResetCode {
   attempts            Int                 @default(0)
   usedAt              DateTime?
   createdAt           DateTime            @default(now())
-
-  admin Admin? @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([adminId, codeExpiresAt])
   @@index([userId, codeExpiresAt])
@@ -138,23 +137,17 @@ enum CompanyStatus {
 
 enum UserRole {
   ADMIN
-  USER  @map("OPERATOR")
-
-  @@map("OperatorRole")
+  USER
 }
 
 enum UserCompanyStatus {
   ACTIVE
   INACTIVE
   DELETED
-
-  @@map("OperatorCompanyStatus")
 }
 
 enum AdminStatus {
   ACTIVE
   INACTIVE
   DELETED
-
-  @@map("UserStatus")
 }
