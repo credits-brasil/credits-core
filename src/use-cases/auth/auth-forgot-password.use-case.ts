@@ -1,10 +1,10 @@
-import { randomUUID } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 
 import { AppError } from "@/constants/auth";
 import { ForgotPasswordAuthInput, PasswordResetToken } from "@/interfaces/auth";
 import { FriendlyError } from "@/utils";
 
-interface AuthUserRecord {
+interface AuthAdminRecord {
   id: string;
   name: string;
   email: string;
@@ -15,7 +15,7 @@ interface AuthUserRecord {
   resetTokenExpiresAt?: number;
 }
 
-const usersByEmail = new Map<string, AuthUserRecord>();
+const adminsByEmail = new Map<string, AuthAdminRecord>();
 const REQUIRED_ADMIN_EMAIL = "admin@admin.com";
 const REQUIRED_ADMIN_NAME = "admin";
 const REQUIRED_ADMIN_PASSWORD = "admin";
@@ -33,8 +33,8 @@ function hashPassword(password: string, salt = "") {
   };
 }
 
-function ensureRequiredAdminUser() {
-  const existingAdmin = usersByEmail.get(REQUIRED_ADMIN_EMAIL);
+function ensureRequiredAdmin() {
+  const existingAdmin = adminsByEmail.get(REQUIRED_ADMIN_EMAIL);
 
   if (existingAdmin) {
     return;
@@ -43,7 +43,7 @@ function ensureRequiredAdminUser() {
   const { hash } = hashPassword(REQUIRED_ADMIN_PASSWORD);
   const now = new Date().toISOString();
 
-  usersByEmail.set(REQUIRED_ADMIN_EMAIL, {
+  adminsByEmail.set(REQUIRED_ADMIN_EMAIL, {
     id: randomUUID(),
     name: REQUIRED_ADMIN_NAME,
     email: REQUIRED_ADMIN_EMAIL,
@@ -53,18 +53,18 @@ function ensureRequiredAdminUser() {
   });
 }
 
-function toAuthUser(user: AuthUserRecord) {
+function toAuthAdmin(admin: AuthAdminRecord) {
   return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
+    id: admin.id,
+    name: admin.name,
+    email: admin.email,
+    createdAt: admin.createdAt,
+    updatedAt: admin.updatedAt,
   };
 }
 
 export async function authForgotPasswordUseCase(email: string) {
-  ensureRequiredAdminUser();
+  ensureRequiredAdmin();
 
   const normalizedEmail = normalizeEmail(email ?? "");
 
@@ -76,22 +76,22 @@ export async function authForgotPasswordUseCase(email: string) {
     });
   }
 
-  const user = usersByEmail.get(normalizedEmail);
+  const admin = adminsByEmail.get(normalizedEmail);
 
-  if (!user) {
+  if (!admin) {
     throw new FriendlyError({
-      message: AppError.USER_NOT_FOUND,
+      message: AppError.ADMIN_NOT_FOUND,
       context: "auth.forgotPassword.notFound",
       code: 404,
     });
   }
 
-  const token = randomUUID();
+  const token = randomInt(0, 1_000_000).toString().padStart(6, "0");
   const expiresAt = Date.now() + 1000 * 60 * 30;
 
-  user.resetToken = token;
-  user.resetTokenExpiresAt = expiresAt;
-  user.updatedAt = new Date().toISOString();
+  admin.resetToken = token;
+  admin.resetTokenExpiresAt = expiresAt;
+  admin.updatedAt = new Date().toISOString();
 
   const resetToken: PasswordResetToken = {
     token,
@@ -99,7 +99,7 @@ export async function authForgotPasswordUseCase(email: string) {
   };
 
   return {
-    user: toAuthUser(user),
+    admin: toAuthAdmin(admin),
     resetToken,
   };
 }

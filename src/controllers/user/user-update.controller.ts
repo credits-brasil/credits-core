@@ -1,26 +1,26 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 
 import { AppError, AppMessages } from "@/constants/user";
-import { UserIdParams, UserUpdateBody } from "@/models/user.model";
+import { CompanyUserCompanyIdParams, CompanyUserIdParams, CompanyUserUpdateBody } from "@/models/user.model";
 import { FriendlyError } from "@/utils";
 import { userUpdateUseCase } from "@/use-cases/user";
 
 export const userUpdateController = async (
   request: FastifyRequest<{
-    Params: UserIdParams;
-    Body: UserUpdateBody;
+    Params: CompanyUserCompanyIdParams & CompanyUserIdParams;
+    Body: CompanyUserUpdateBody;
   }>,
   reply: FastifyReply,
 ) => {
-  const { id } = request.params;
+  const { companyId, id } = request.params;
 
   try {
-    const user = await userUpdateUseCase(id, request.body);
+    const companyUser = await userUpdateUseCase(companyId, id, request.body);
 
     return reply.code(200).send({
       statusCode: 200,
       message: AppMessages.UPDATE_USER_SUCCESS,
-      user,
+      companyUser,
     });
   } catch (error: unknown) {
     if (error instanceof FriendlyError) {

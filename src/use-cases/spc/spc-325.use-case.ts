@@ -180,10 +180,13 @@ export async function spc325UseCase(
 
     console.log(xml, "XML recebido do serviço SPC");
 
-
     const result =
       typeDocument === "CPF"
         ? {
+            protocolo:
+              json["S:Envelope"]["S:Body"]["ns2:resultado"].protocolo?.$,
+            operador: json["S:Envelope"]["S:Body"]["ns2:resultado"].operador?.$,
+
             // DEFAULT
 
             // 19
@@ -626,6 +629,10 @@ export async function spc325UseCase(
             }),
           }
         : {
+            protocolo:
+              json["S:Envelope"]["S:Body"]["ns2:resultado"].protocolo?.$,
+            operador: json["S:Envelope"]["S:Body"]["ns2:resultado"].operador?.$,
+
             // DEFAULT
 
             // 19
@@ -1047,8 +1054,6 @@ export async function spc325UseCase(
               ),
             }),
           };
-
-    console.log("Resultado do use-case:", result?.ccf);
 
     return result;
   } catch (error) {

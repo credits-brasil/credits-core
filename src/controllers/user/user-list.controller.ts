@@ -1,16 +1,20 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 
 import { AppError, AppMessages } from "@/constants/user";
+import { CompanyUserCompanyIdParams } from "@/models/user.model";
 import { FriendlyError } from "@/utils";
 import { userListUseCase } from "@/use-cases/user";
 
 export const userListController = async (
-  request: FastifyRequest<{ Querystring: { q?: string; search?: string } }>,
+  request: FastifyRequest<{
+    Params: CompanyUserCompanyIdParams;
+  }>,
   reply: FastifyReply,
 ) => {
+  const { companyId } = request.params;
+
   try {
-    const search = request.query.q ?? request.query.search ?? "";
-    const users = await userListUseCase(search);
+    const users = await userListUseCase(companyId);
 
     return reply.code(200).send({
       statusCode: 200,

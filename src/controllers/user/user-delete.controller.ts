@@ -1,25 +1,25 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 
 import { AppError, AppMessages } from "@/constants/user";
-import { UserIdParams } from "@/models/user.model";
+import { CompanyUserCompanyIdParams, CompanyUserIdParams } from "@/models/user.model";
 import { FriendlyError } from "@/utils";
 import { userDeleteUseCase } from "@/use-cases/user";
 
 export const userDeleteController = async (
   request: FastifyRequest<{
-    Params: UserIdParams;
+    Params: CompanyUserCompanyIdParams & CompanyUserIdParams;
   }>,
   reply: FastifyReply,
 ) => {
-  const { id } = request.params;
+  const { companyId, id } = request.params;
 
   try {
-    const user = await userDeleteUseCase(id);
+    const companyUser = await userDeleteUseCase(companyId, id);
 
     return reply.code(200).send({
       statusCode: 200,
       message: AppMessages.DELETE_USER_SUCCESS,
-      user,
+      companyUser,
     });
   } catch (error: unknown) {
     if (error instanceof FriendlyError) {

@@ -50,7 +50,7 @@ export async function spc668UseCase(
   const allowedInsumos = new Set([
     18, 49, 5244, 5178, 5241, 5224, 5226, 5227, 5193, 5263, 5257, 5260, 5240,
     5256, 5265, 5179, 5225, 24, 5258, 5186, 5267, 5184, 5229, 5247, 5245, 23,
-    77, 5183,
+    77, 5183, 78, 5185,
   ]);
 
   const invalidInsumos = insumos.filter(
@@ -73,11 +73,9 @@ export async function spc668UseCase(
       insumos,
     });
 
-    return json
-
     return {
-      // xml: soapXml,
-      json2: json,
+      protocolo: json["S:Envelope"]["S:Body"]["ns2:resultado"].protocolo?.$,
+      operador: json["S:Envelope"]["S:Body"]["ns2:resultado"].operador?.$,
 
       // DEFAULT
 
@@ -146,240 +144,225 @@ export async function spc668UseCase(
 
       // 18
       ...(insumos.includes(18) && {
-                  acao: get18AcaoInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"].acao,
-                  ),
-                }),
+        acao: get18AcaoInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"].acao,
+        ),
+      }),
 
       // 49
-       ...(insumos.includes(49) && {
-                  administrador: get49AdministradorInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"].administrador,
-                  ),
-                }),
+      ...(insumos.includes(49) && {
+        administrador: get49AdministradorInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"].administrador,
+        ),
+      }),
 
       // 5244
-       ...(insumos.includes(5244) && {
-                  "divida-publica-cadin": get5244DividaPublicaCadinInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                      "divida-publica-cadin"
-                    ],
-                  ),
-                }),
+      ...(insumos.includes(5244) && {
+        "divida-publica-cadin": get5244DividaPublicaCadinInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"]["divida-publica-cadin"],
+        ),
+      }),
 
       // 5178
-       ...(insumos.includes(5178) && {
-                  "faturamento-presumido": get5178FaturamentoPresumidoInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                      "faturamento-presumido"
-                    ],
-                  ),
-                }),
+      ...(insumos.includes(5178) && {
+        "faturamento-presumido": get5178FaturamentoPresumidoInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"][
+            "faturamento-presumido"
+          ],
+        ),
+      }),
 
       // 5241
-       ...(insumos.includes(5241) && {
-                  "grupo-economico": get5241GrupoEconomicoInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"]["grupo-economico"],
-                  ),
-                }),
+      ...(insumos.includes(5241) && {
+        "grupo-economico": get5241GrupoEconomicoInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"]["grupo-economico"],
+        ),
+      }),
 
       // 5224
-       ...(insumos.includes(5224) && {
-                  "indice-comportamento-gastos-cadastro-positivo":
-                    get5224IndiceComportamentoGastosCadastroPositivoInput(
-                      json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                        "indice-comportamento-gastos-cadastro-positivo"
-                      ],
-                    ),
-                }),
+      ...(insumos.includes(5224) && {
+        "indice-comportamento-gastos-cadastro-positivo":
+          get5224IndiceComportamentoGastosCadastroPositivoInput(
+            json["S:Envelope"]["S:Body"]["ns2:resultado"][
+              "indice-comportamento-gastos-cadastro-positivo"
+            ],
+          ),
+      }),
 
       // 5226
-       ...(insumos.includes(5226) && {
-                  "indice-consulta-realizada-por-segmento-cadastro-positivo":
-                    get5226IndiceConsultaRealizadaPorSegmentoCadastroPositivoInput(
-                      json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                        "indice-consulta-realizada-por-segmento-cadastro-positivo"
-                      ],
-                    ),
-                }),
+      ...(insumos.includes(5226) && {
+        "indice-consulta-realizada-por-segmento-cadastro-positivo":
+          get5226IndiceConsultaRealizadaPorSegmentoCadastroPositivoInput(
+            json["S:Envelope"]["S:Body"]["ns2:resultado"][
+              "indice-consulta-realizada-por-segmento-cadastro-positivo"
+            ],
+          ),
+      }),
 
       // 5227
-       ...(insumos.includes(5227) && {
-                  "indice-pontualidade-pagamento-cadastro-positivo":
-                    get5227IndicePontualidadePagamentoCadastroPositivoInput(
-                      json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                        "indice-pontualidade-pagamento-cadastro-positivo"
-                      ],
-                    ),
-                }),
+      ...(insumos.includes(5227) && {
+        "indice-pontualidade-pagamento-cadastro-positivo":
+          get5227IndicePontualidadePagamentoCadastroPositivoInput(
+            json["S:Envelope"]["S:Body"]["ns2:resultado"][
+              "indice-pontualidade-pagamento-cadastro-positivo"
+            ],
+          ),
+      }),
 
       // 5193
-       ...(insumos.includes(5193) && {
-                  "indice-relacionamento-mercado-pj":
-                    get5193IndiceRelacionamentoMercadoPJInput(
-                      json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                        "indice-relacionamento-mercado-pj"
-                      ],
-                    ),
-                }),
+      ...(insumos.includes(5193) && {
+        "indice-relacionamento-mercado-pj":
+          get5193IndiceRelacionamentoMercadoPJInput(
+            json["S:Envelope"]["S:Body"]["ns2:resultado"][
+              "indice-relacionamento-mercado-pj"
+            ],
+          ),
+      }),
 
       // 5263
-       ...(insumos.includes(5263) && {
-              "inscricao-estadual": get5263InscricaoEstadualInput(
-                json["S:Envelope"]["S:Body"]["ns2:resultado"]["inscricao-estadual"],
-              ),
-            }),
+      ...(insumos.includes(5263) && {
+        "inscricao-estadual": get5263InscricaoEstadualInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"]["inscricao-estadual"],
+        ),
+      }),
 
       // 5257
-       ...(insumos.includes(5257) && {
-                  "insumo-historico-operacao-scr":
-                    get5257InsumoHistoricoOperacaoSCRInput(
-                      json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                        "insumo-historico-operacao-scr"
-                      ],
-                    ),
-                }),
+      ...(insumos.includes(5257) && {
+        "insumo-historico-operacao-scr": get5257InsumoHistoricoOperacaoSCRInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"][
+            "insumo-historico-operacao-scr"
+          ],
+        ),
+      }),
 
       // 5260
-       ...(insumos.includes(5260) && {
-                  "insumo-historico-operacoes-agronegocio-B3":
-                    get5260InsumoHistoricoOperacoesAgronegocioB3Input(
-                      json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                        "insumo-historico-operacoes-agronegocio-B3"
-                      ],
-                    ),
-                }),
+      ...(insumos.includes(5260) && {
+        "insumo-historico-operacoes-agronegocio-B3":
+          get5260InsumoHistoricoOperacoesAgronegocioB3Input(
+            json["S:Envelope"]["S:Body"]["ns2:resultado"][
+              "insumo-historico-operacoes-agronegocio-B3"
+            ],
+          ),
+      }),
 
       // 5240
-       ...(insumos.includes(5240) && {
-                  "insumo-historico-pagamento-sumarizado":
-                    get5240InsumoHistoricoPagamentoSumarizadoInput(
-                      json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                        "insumo-historico-pagamento-sumarizado"
-                      ],
-                    ),
-                }),
+      ...(insumos.includes(5240) && {
+        "insumo-historico-pagamento-sumarizado":
+          get5240InsumoHistoricoPagamentoSumarizadoInput(
+            json["S:Envelope"]["S:Body"]["ns2:resultado"][
+              "insumo-historico-pagamento-sumarizado"
+            ],
+          ),
+      }),
 
       // 5256
       ...(insumos.includes(5256) && {
-                  "insumo-operacao-scr": get5256InsumoOperacaoSCRInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                      "insumo-operacao-scr"
-                    ],
-                  ),
-                }),
+        "insumo-operacao-scr": get5256InsumoOperacaoSCRInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"]["insumo-operacao-scr"],
+        ),
+      }),
 
       // 5265
-       ...(insumos.includes(5265) && {
-                  "insumo-participacao-mercado-capitais":
-                    get5265InsumoParticipacaoMercadoCapitaisInput(
-                      json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                        "insumo-participacao-mercado-capitais"
-                      ],
-                    ),
-                }),
+      ...(insumos.includes(5265) && {
+        "insumo-participacao-mercado-capitais":
+          get5265InsumoParticipacaoMercadoCapitaisInput(
+            json["S:Envelope"]["S:Body"]["ns2:resultado"][
+              "insumo-participacao-mercado-capitais"
+            ],
+          ),
+      }),
 
       // 5179
-       ...(insumos.includes(5179) && {
-                  "limite-credito-pj": get5179LimiteCreditoPJInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                      "limite-credito-pj"
-                    ],
-                  ),
-                }),
+      ...(insumos.includes(5179) && {
+        "limite-credito-pj": get5179LimiteCreditoPJInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"]["limite-credito-pj"],
+        ),
+      }),
 
       // 5225
-       ...(insumos.includes(5225) && {
-                  "movimentacao-cadastro-positivo":
-                    get5225MovimentacaoCadastroPositivoInput(
-                      json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                        "movimentacao-cadastro-positivo"
-                      ],
-                    ),
-                }),
+      ...(insumos.includes(5225) && {
+        "movimentacao-cadastro-positivo":
+          get5225MovimentacaoCadastroPositivoInput(
+            json["S:Envelope"]["S:Body"]["ns2:resultado"][
+              "movimentacao-cadastro-positivo"
+            ],
+          ),
+      }),
 
       // 24
-       ...(insumos.includes(24) && {
-                  "participacao-empresa": get24ParticipacaoEmpresaInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                      "participacao-empresa"
-                    ],
-                  ),
-                }),
+      ...(insumos.includes(24) && {
+        "participacao-empresa": get24ParticipacaoEmpresaInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"]["participacao-empresa"],
+        ),
+      }),
 
       // 5258
-       ...(insumos.includes(5258) && {
-                  "participacao-empresa": get5258ParticipacaoEmpresaInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                      "participacao-empresa"
-                    ],
-                  ),
-                }),
+      ...(insumos.includes(5258) && {
+        "participacao-empresa": get5258ParticipacaoEmpresaInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"]["participacao-empresa"],
+        ),
+      }),
 
       // 5186
-       ...(insumos.includes(5186) && {
-                  "quadro-social-mais-completo-pj":
-                    get5186QuadroSocialMaisCompletoPjInput(
-                      json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                        "quadro-social-mais-completo-pj"
-                      ],
-                    ),
-                }),
+      ...(insumos.includes(5186) && {
+        "quadro-social-mais-completo-pj":
+          get5186QuadroSocialMaisCompletoPjInput(
+            json["S:Envelope"]["S:Body"]["ns2:resultado"][
+              "quadro-social-mais-completo-pj"
+            ],
+          ),
+      }),
 
       // 5267
       ...(insumos.includes(5267) && {
-                  "quantidade-funcionario": get5267QuantidadeFuncionarioInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                      "quantidade-funcionario"
-                    ],
-                  ),
-                }),
+        "quantidade-funcionario": get5267QuantidadeFuncionarioInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"][
+            "quantidade-funcionario"
+          ],
+        ),
+      }),
 
       // 5184
-       ...(insumos.includes(5184) && {
-                  "risco-credito-pj": get5184RiscoCreditoPJInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"]["risco-credito-pj"],
-                  ),
-                }),
+      ...(insumos.includes(5184) && {
+        "risco-credito-pj": get5184RiscoCreditoPJInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"]["risco-credito-pj"],
+        ),
+      }),
 
       // 5229
-       ...(insumos.includes(5229) && {
-                  "score-pj": get5229ScorePJInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"]["score-pj"],
-                  ),
-                }),
+      ...(insumos.includes(5229) && {
+        "score-pj": get5229ScorePJInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"]["score-pj"],
+        ),
+      }),
 
       // 5247
-       ...(insumos.includes(5247) && {
-                  "score-pj-mei": get5247ScorePJMEIInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"]["score-pj-mei"],
-                  ),
-                }),
+      ...(insumos.includes(5247) && {
+        "score-pj-mei": get5247ScorePJMEIInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"]["score-pj-mei"],
+        ),
+      }),
 
       // 5245
       ...(insumos.includes(5245) && {
-                  "score-recuperacao-pj": get5245ScoreRecuperacaoPJInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                      "score-recuperacao-pj"
-                    ],
-                  ),
-                }),
+        "score-recuperacao-pj": get5245ScoreRecuperacaoPJInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"]["score-recuperacao-pj"],
+        ),
+      }),
 
-       // 23
-                ...(insumos.includes(23) && {
-                  socio: get23SocioInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"].socio,
-                  ),
-                }),
-      
-                // 77
-                ...(insumos.includes(77) && {
-                  "spc-score-3-meses": get77SPCScore3MesesInput(
-                    json["S:Envelope"]["S:Body"]["ns2:resultado"][
-                      "spc-score-3-meses"
-                    ],
-                  ),
-                }),
+      // 23
+      ...(insumos.includes(23) && {
+        socio: get23SocioInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"].socio,
+        ),
+      }),
+
+      // 77
+      ...(insumos.includes(77) && {
+        "spc-score-3-meses": get77SPCScore3MesesInput(
+          json["S:Envelope"]["S:Body"]["ns2:resultado"]["spc-score-3-meses"],
+        ),
+      }),
 
       // 5183
       ...(insumos.includes(5183) && {}),

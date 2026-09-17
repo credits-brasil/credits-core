@@ -7,19 +7,19 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        String     @id @default(uuid())
+model Admin {
+  id        String      @id @default(uuid())
   name      String
-  cpf       String     @unique
-  email     String     @unique
+  cpf       String      @unique
+  email     String      @unique
   password  String
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  status    UserStatus @default(ACTIVE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  status    AdminStatus @default(ACTIVE)
 
   @@index([name])
   @@index([status])
-  @@map("users")
+  @@map("admins")
 }
 
 model Order {
@@ -46,17 +46,17 @@ model Order {
 }
 
 model Company {
-  id                     String            @id @default(uuid())
+  id                     String        @id @default(uuid())
   cnpj                   String
   name                   String
   operator_SPC           String?
   operator_SPC_password  String?
-  limit_consults_daily   Int               @default(0)
-  limit_consults_monthly Int               @default(0)
-  status                 CompanyStatus     @default(ACTIVE)
-  createdAt              DateTime          @default(now())
-  updatedAt              DateTime          @updatedAt
-  operators              CompanyOperator[]
+  limit_consults_daily   Int           @default(0)
+  limit_consults_monthly Int           @default(0)
+  status                 CompanyStatus @default(ACTIVE)
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  users                  CompanyUser[]
 
   @@index([cnpj])
   @@index([name])
@@ -64,39 +64,54 @@ model Company {
   @@map("companies")
 }
 
-model Operator {
-  id        String            @id @default(uuid())
-  user      String            @unique
+model User {
+  id        String        @id @default(uuid())
+  user      String?       @unique
   cpf       String
   name      String
   password  String
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  email     String            @unique
-  phone     String            @unique
-  companies CompanyOperator[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  email     String?       @unique
+  phone     String        @unique
+  companies CompanyUser[]
+  passwordResetCodes PasswordResetCode[]
 
   @@index([user])
   @@index([cpf])
   @@index([name])
-  @@map("operators")
+  @@map("users")
 }
 
-model CompanyOperator {
-  id         String                @id @default(uuid())
-  companyId  String
-  operatorId String
-  role       OperatorRole          @default(OPERATOR)
-  status     OperatorCompanyStatus @default(ACTIVE)
-  createdAt  DateTime              @default(now())
-  updatedAt  DateTime              @updatedAt
-  company    Company               @relation(fields: [companyId], references: [id])
-  operator   Operator              @relation(fields: [operatorId], references: [id])
+model PasswordResetCode {
+  id        String   @id @default(uuid())
+  userId    String
+  codeHash  String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([operatorId, companyId])
-  @@index([operatorId])
+  @@index([userId, expiresAt])
+  @@index([userId, usedAt])
+  @@map("password_reset_codes")
+}
+
+model CompanyUser {
+  id        String            @id @default(uuid())
+  companyId String
+  userId    String            @map("operatorId")
+  role      UserRole          @default(USER)
+  status    UserCompanyStatus @default(ACTIVE)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  company   Company           @relation(fields: [companyId], references: [id])
+  user      User              @relation(fields: [userId], references: [id])
+
+  @@unique([userId, companyId])
+  @@index([userId])
   @@index([companyId])
-  @@map("company_operators")
+  @@map("company_users")
 }
 
 enum CompanyStatus {
@@ -105,18 +120,24 @@ enum CompanyStatus {
   DELETED
 }
 
-enum OperatorRole {
+enum UserRole {
   ADMIN
-  OPERATOR
+  USER  @map("OPERATOR")
+
+  @@map("OperatorRole")
 }
 
-enum OperatorCompanyStatus {
+enum UserCompanyStatus {
   ACTIVE
   INACTIVE
+
+  @@map("OperatorCompanyStatus")
 }
 
-enum UserStatus {
+enum AdminStatus {
   ACTIVE
   INACTIVE
   DELETED
+
+  @@map("UserStatus")
 }

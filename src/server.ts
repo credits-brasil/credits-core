@@ -5,11 +5,12 @@ import cors from "@fastify/cors";
 import cron from "node-cron";
 import axios from "axios";
 
-import { authRoutes } from "./routes/auth.routes";
+import { authAdminRoutes } from "./routes/auth-admin.routes";
+import { authUserRoutes } from "./routes/auth-user.routes";
 import { companyRoutes } from "./routes/company.routes";
-import { operatorRoutes } from "./routes/operator.routes";
-import { spcRoutes } from "./routes/spc.routes";
 import { userRoutes } from "./routes/user.routes";
+import { spcRoutes } from "./routes/spc.routes";
+import { adminRoutes } from "./routes/admin.routes";
 
 const server: FastifyInstance = Fastify({
   logger: true,
@@ -22,11 +23,12 @@ server.register(cors, {
   allowedHeaders: ["Content-Type", "Authorization", "x-requested-with"],
 });
 
-server.register(authRoutes);
+server.register(authAdminRoutes);
+server.register(authUserRoutes);
 server.register(companyRoutes);
-server.register(operatorRoutes);
-server.register(spcRoutes);
 server.register(userRoutes);
+server.register(spcRoutes);
+server.register(adminRoutes);
 
 const PORT = Number(process.env.PORT ?? 3000);
 

@@ -4,28 +4,38 @@ import {
   userCreateController,
   userDeleteController,
   userListController,
-  userToggleStatusController,
+  userLookupController,
   userUpdateController,
 } from "@/controllers/user";
-import { UserCreateBody, UserIdParams, UserUpdateBody } from "@/models/user.model";
+import {
+  CompanyUserCompanyIdParams,
+  CompanyUserCreateBody,
+  CompanyUserIdParams,
+  CompanyUserLookupQuery,
+  CompanyUserUpdateBody,
+} from "@/models/user.model";
 
 export async function userRoutes(server: FastifyInstance) {
-  server.post<{
-    Body: UserCreateBody;
-  }>("/api/user", userCreateController);
+  server.get<{
+    Params: CompanyUserCompanyIdParams;
+  }> ("/api/company/:companyId/users", userListController);
 
   server.get<{
-    Querystring: { q?: string; search?: string };
-  }>("/api/users", userListController);
+    Params: CompanyUserCompanyIdParams;
+    Querystring: CompanyUserLookupQuery;
+  }> ("/api/company/:companyId/users/lookup", userLookupController);
+
+  server.post<{
+    Params: CompanyUserCompanyIdParams;
+    Body: CompanyUserCreateBody;
+  }> ("/api/company/:companyId/users", userCreateController);
 
   server.put<{
-    Params: UserIdParams;
-    Body: UserUpdateBody;
-  }>("/api/user/:id", userUpdateController);
-  server.patch<{
-    Params: UserIdParams;
-  }> ("/api/user/:id/status", userToggleStatusController);
+    Params: CompanyUserCompanyIdParams & CompanyUserIdParams;
+    Body: CompanyUserUpdateBody;
+  }> ("/api/company/:companyId/users/:id", userUpdateController);
+
   server.delete<{
-    Params: UserIdParams;
-  }>("/api/user/:id", userDeleteController);
+    Params: CompanyUserCompanyIdParams & CompanyUserIdParams;
+  }> ("/api/company/:companyId/users/:id", userDeleteController);
 }

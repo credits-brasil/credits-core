@@ -13,6 +13,11 @@ export interface AuthForgotPasswordBody {
   email: string;
 }
 
+export interface AuthVerifyResetCodeBody {
+  email: string;
+  code: string;
+}
+
 export interface AuthResetPasswordBody {
   email: string;
   token: string;

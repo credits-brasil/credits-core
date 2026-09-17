@@ -1,17 +1,33 @@
-export interface UserCreateBody {
+export interface CompanyUserCreateBody {
+  user?: string;
   name: string;
   cpf: string;
-  email: string;
-}
-
-export interface UserUpdateBody {
-  name?: string;
-  cpf?: string;
   email?: string;
-  password?: string;
+  phone: string;
+  password: string;
+  role?: "ADMIN" | "USER";
   status?: "ACTIVE" | "INACTIVE";
 }
 
-export interface UserIdParams {
+export interface CompanyUserUpdateBody {
+  user?: string;
+  name?: string;
+  cpf?: string;
+  email?: string;
+  phone?: string;
+  password?: string;
+  role?: "ADMIN" | "USER";
+  status?: "ACTIVE" | "INACTIVE";
+}
+
+export interface CompanyUserIdParams {
   id: string;
+}
+
+export interface CompanyUserCompanyIdParams {
+  companyId: string;
+}
+
+export interface CompanyUserLookupQuery {
+  cpf: string;
 }

@@ -1,4 +1,4 @@
-export interface CreateAuthUserInput {
+export interface CreateAuthAdminInput {
   name: string;
   email: string;
   password: string;
@@ -9,8 +9,8 @@ export interface LoginAuthInput {
   password: string;
 }
 
-export interface LoginOperatorAuthInput {
-  cpf: string;
+export interface LoginUserAuthInput {
+  email: string;
   password: string;
 }
 
@@ -24,7 +24,7 @@ export interface ResetPasswordAuthInput {
   newPassword: string;
 }
 
-export interface AuthUser {
+export interface AuthAdmin {
   id: string;
   name: string;
   email: string;
@@ -34,10 +34,10 @@ export interface AuthUser {
 
 export interface AuthSession {
   accessToken: string;
-  user: AuthUser;
+  admin: AuthAdmin;
 }
 
-export interface OperatorAuthUser {
+export interface AuthUser {
   id: string;
   name: string;
   cpf: string;
@@ -45,9 +45,9 @@ export interface OperatorAuthUser {
   updatedAt: string;
 }
 
-export interface OperatorAuthSession {
+export interface UserAuthSession {
   accessToken: string;
-  operator: OperatorAuthUser;
+  user: AuthUser;
 }
 
 export interface PasswordResetToken {

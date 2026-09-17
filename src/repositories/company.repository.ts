@@ -36,11 +36,11 @@ export const listCompanies = (search?: string) => {
   });
 };
 
-export const listCompaniesByOperator = (operatorId: string) => {
-  return prisma.companyOperator
+export const listCompaniesByUser = (userId: string) => {
+  return prisma.companyUser
     .findMany({
       where: {
-        operatorId,
+        userId,
         status: { not: "INACTIVE" },
         company: {
           status: { not: CompanyStatus.DELETED },

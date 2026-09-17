@@ -22,10 +22,10 @@ async function main() {
   const salt = randomBytes(16).toString('hex');
   const hash = `${salt}:${scryptSync(password, salt, 64).toString('hex')}`;
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const existing = await prisma.admin.findUnique({ where: { email } });
 
   if (existing) {
-    await prisma.user.update({
+    await prisma.admin.update({
       where: { id: existing.id },
       data: {
         name: 'admin',
@@ -34,11 +34,11 @@ async function main() {
       },
     });
 
-    console.log('Updated existing admin user');
+    console.log('Updated existing admin');
     return;
   }
 
-  await prisma.user.create({
+  await prisma.admin.create({
     data: {
       name: 'admin',
       cpf: '00000000000',
@@ -48,7 +48,7 @@ async function main() {
     },
   });
 
-  console.log('Created admin user');
+  console.log('Created admin');
 }
 
 main()

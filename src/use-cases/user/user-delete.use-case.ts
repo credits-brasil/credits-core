@@ -1,11 +1,22 @@
 import { AppError } from "@/constants/user";
+import { findCompanyById } from "@/repositories/company.repository";
+import { findCompanyUserById, softDeleteCompanyUser } from "@/repositories/user.repository";
 import { FriendlyError } from "@/utils";
-import { findUserById, softDeleteUser } from "@/repositories/user.repository";
 
-export async function userDeleteUseCase(id: string) {
-  const user = await findUserById(id);
+export async function userDeleteUseCase(companyId: string, userRelationId: string) {
+  const company = await findCompanyById(companyId);
 
-  if (!user || user.status === "DELETED") {
+  if (!company || company.status === "DELETED") {
+    throw new FriendlyError({
+      message: AppError.COMPANY_NOT_FOUND,
+      context: "user.delete.companyNotFound",
+      code: 404,
+    });
+  }
+
+  const relation = await findCompanyUserById(userRelationId);
+
+  if (!relation || relation.companyId !== companyId) {
     throw new FriendlyError({
       message: AppError.USER_NOT_FOUND,
       context: "user.delete.notFound",
@@ -13,5 +24,5 @@ export async function userDeleteUseCase(id: string) {
     });
   }
 
-  return softDeleteUser(id);
+  return softDeleteCompanyUser(userRelationId);
 }

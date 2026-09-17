@@ -1,16 +1,20 @@
-import { UserStatus } from "../generated/prisma/enums";
+export type UserRole = "ADMIN" | "USER";
+export type UserCompanyStatus = "ACTIVE" | "INACTIVE";
 
-export interface CreateUserInput {
+export interface CreateCompanyUserInput {
+  companyId: string;
   name: string;
   cpf: string;
-  email: string;
-  password?: string;
+  password: string;
+  role?: UserRole;
+  status?: UserCompanyStatus;
 }
 
-export interface UpdateUserInput {
+export interface UpdateCompanyUserInput {
+  companyId?: string;
   name?: string;
   cpf?: string;
-  email?: string;
   password?: string;
-  status?: UserStatus;
+  role?: UserRole;
+  status?: UserCompanyStatus;
 }

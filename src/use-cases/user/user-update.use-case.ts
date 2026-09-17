@@ -1,12 +1,30 @@
 import { AppError } from "@/constants/user";
-import { UpdateUserInput } from "@/interfaces/user";
-import { FriendlyError, hashPassword } from "@/utils";
-import { findUserById, updateUser } from "@/repositories/user.repository";
+import { findCompanyById } from "@/repositories/company.repository";
+import {
+  findCompanyUserById,
+  updateCompanyUser,
+  updateUser,
+} from "@/repositories/user.repository";
+import { FriendlyError } from "@/utils";
 
-export async function userUpdateUseCase(id: string, input: UpdateUserInput) {
-  const user = await findUserById(id);
+export async function userUpdateUseCase(
+  companyId: string,
+  userRelationId: string,
+  input: { name?: string; cpf?: string; email?: string; phone?: string; password?: string; role?: "ADMIN" | "USER"; status?: "ACTIVE" | "INACTIVE" },
+) {
+  const company = await findCompanyById(companyId);
 
-  if (!user || user.status === "DELETED") {
+  if (!company || company.status === "DELETED") {
+    throw new FriendlyError({
+      message: AppError.COMPANY_NOT_FOUND,
+      context: "user.update.companyNotFound",
+      code: 404,
+    });
+  }
+
+  const relation = await findCompanyUserById(userRelationId);
+
+  if (!relation || relation.companyId !== companyId) {
     throw new FriendlyError({
       message: AppError.USER_NOT_FOUND,
       context: "user.update.notFound",
@@ -14,11 +32,18 @@ export async function userUpdateUseCase(id: string, input: UpdateUserInput) {
     });
   }
 
-  const data: UpdateUserInput = { ...input };
-
-  if (input.password) {
-    data.password = hashPassword(input.password);
+  if (input.name || input.password || input.email || input.phone || input.cpf) {
+    await updateUser(relation.userId, {
+      name: input.name?.trim(),
+      cpf: input.cpf?.trim(),
+      email: input.email?.trim().toLowerCase(),
+      phone: input.phone?.trim(),
+      password: input.password?.trim(),
+    });
   }
 
-  return updateUser(id, data);
+  return updateCompanyUser(userRelationId, {
+    role: input.role,
+    status: input.status,
+  });
 }
