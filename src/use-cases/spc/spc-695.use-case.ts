@@ -45,6 +45,14 @@ import { get5253ScoreMaisPositivoFinanceiroInput } from "@/utils/inputs/get-5253
 import { get5264AlertaCPFSuspeitoInput } from "@/utils/inputs/get-5264-insumo_alerta-cpf-suspeito.input";
 import { get5239ClassificacaoRiscoDebitosAtivosInput } from "@/utils/inputs/get-5239-insumo-classificacao-risco-debitos-ativos.input";
 import { get5122RendaPresumidaSPCInput } from "@/utils/inputs/get-5122-renda-presumida-spc.input";
+import { get78SPCScore12MesesInput } from "@/utils/inputs/get-78-spc-score-12-meses.input";
+import { get5247ScorePJMEIInput } from "@/utils/inputs/get-5247-score-pj-mei.input";
+import { get5179LimiteCreditoPJInput } from "@/utils/inputs/get-5179-limite-credito-pj.input";
+import { get5265InsumoParticipacaoMercadoCapitaisInput } from "@/utils/inputs/get-5265-insumo-participacao-mercado-capitais.input";
+import { get5267QuantidadeFuncionarioInput } from "@/utils/inputs/get-5267-quantidade-funcionario.input";
+import { get24ParticipacaoEmpresaInput } from "@/utils/inputs/get-24-participacao-empresa.input";
+import { get23SocioInput } from "@/utils/inputs/get-23-socio.input";
+import { get5186QuadroSocialMaisCompletoPjInput } from "@/utils/inputs/get-5186-quadro-social-mais-completo-pj.input";
 
 function convertSPCInput<Input, Args extends unknown[], Output>(
   converter: (input: Input, ...args: Args) => Output,
@@ -69,6 +77,7 @@ export async function spc695UseCase(
     ],
     CNPJ: [
       5244, 5178, 5185, 5241, 5224, 5227, 5229, 5245, 5256, 5257, 18, 49, 77,
+      78, 5247, 5179, 5265, 5267, 24, 23, 5186,
     ],
   } as const;
 
@@ -440,6 +449,51 @@ export async function spc695UseCase(
               "spc-score-3-meses": convertSPCInput(
                 get77SPCScore3MesesInput,
                 resultado["spc-score-3-meses"],
+              ),
+            }),
+            ...(insumos.includes(78) && {
+              "spc-score-12-meses": convertSPCInput(
+                get78SPCScore12MesesInput,
+                resultado["spc-score-12-meses"],
+              ),
+            }),
+            ...(insumos.includes(5247) && {
+              "score-pj-mei": convertSPCInput(
+                get5247ScorePJMEIInput,
+                resultado["score-pj-mei"],
+              ),
+            }),
+            ...(insumos.includes(5179) && {
+              "limite-credito-pj": convertSPCInput(
+                get5179LimiteCreditoPJInput,
+                resultado["limite-credito-pj"],
+              ),
+            }),
+            ...(insumos.includes(5265) && {
+              "insumo-participacao-mercado-capitais": convertSPCInput(
+                get5265InsumoParticipacaoMercadoCapitaisInput,
+                resultado["insumo-participacao-mercado-capitais"],
+              ),
+            }),
+            ...(insumos.includes(5267) && {
+              "quantidade-funcionario": convertSPCInput(
+                get5267QuantidadeFuncionarioInput,
+                resultado["quantidade-funcionario"],
+              ),
+            }),
+            ...(insumos.includes(24) && {
+              "participacao-empresa": convertSPCInput(
+                get24ParticipacaoEmpresaInput,
+                resultado["participacao-empresa"],
+              ),
+            }),
+            ...(insumos.includes(23) && {
+              socio: convertSPCInput(get23SocioInput, resultado.socio),
+            }),
+            ...(insumos.includes(5186) && {
+              "quadro-social-mais-completo-pj": convertSPCInput(
+                get5186QuadroSocialMaisCompletoPjInput,
+                resultado["quadro-social-mais-completo-pj"],
               ),
             }),
           };
