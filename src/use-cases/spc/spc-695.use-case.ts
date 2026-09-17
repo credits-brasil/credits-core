@@ -1,5 +1,3 @@
-import { AppError } from "@/constants/spc";
-
 import { FriendlyError, getTipoConsumidor } from "@/utils";
 
 import { get5268ValidaCelularInput } from "@/utils/inputs/get-5268-valida-celular.input";
@@ -48,6 +46,17 @@ import { get5264AlertaCPFSuspeitoInput } from "@/utils/inputs/get-5264-insumo_al
 import { get5239ClassificacaoRiscoDebitosAtivosInput } from "@/utils/inputs/get-5239-insumo-classificacao-risco-debitos-ativos.input";
 import { get5122RendaPresumidaSPCInput } from "@/utils/inputs/get-5122-renda-presumida-spc.input";
 
+function convertSPCInput<Input, Args extends unknown[], Output>(
+  converter: (input: Input, ...args: Args) => Output,
+  input: Input | null | undefined | "",
+  ...args: Args
+): Output | null {
+  // Blocos ausentes ou tags vazias no SOAP não representam quantidade zero.
+  if (input == null || input === "") return null;
+
+  return converter(input, ...args);
+}
+
 export async function spc695UseCase(
   document: string,
   typeDocument: "CPF" | "CNPJ",
@@ -82,282 +91,354 @@ export async function spc695UseCase(
       document,
       insumos,
     });
-    const resultado = json["S:Envelope"]["S:Body"]["ns2:resultado"];
+    const resultado = json?.["S:Envelope"]?.["S:Body"]?.["ns2:resultado"];
+
+    if (!resultado || typeof resultado !== "object" || Array.isArray(resultado)) {
+      throw new FriendlyError({
+        message: "Resposta inválida do SPC Mais: resultado ausente ou inválido.",
+        context: "spc695UseCase.response",
+        code: 502,
+      });
+    }
 
     const result =
       typeDocument === "CPF"
         ? {
-            "alerta-documento": get19AlertaDocumentoInput(
+            "alerta-documento": convertSPCInput(
+              get19AlertaDocumentoInput,
               resultado["alerta-documento"],
             ),
-            ccf: get15CCFInput(resultado.ccf),
+            ccf: convertSPCInput(get15CCFInput, resultado.ccf),
 
-            "cheque-lojista": get9ChequeLojistaInput(
+            "cheque-lojista": convertSPCInput(
+              get9ChequeLojistaInput,
               resultado["cheque-lojista"],
             ),
-            "cheque-sem-fundo-varejo": get69ChequeSemFundoVarejoInput(
+            "cheque-sem-fundo-varejo": convertSPCInput(
+              get69ChequeSemFundoVarejoInput,
               resultado["cheque-sem-fundo-varejo"],
             ),
-            "consulta-realizada": get21ConsultaRealizadaInput(
+            "consulta-realizada": convertSPCInput(
+              get21ConsultaRealizadaInput,
               resultado["consulta-realizada"],
             ),
-            consumidor: get1ConsumidorInput(resultado.consumidor, typeDocument),
+            consumidor: convertSPCInput(
+              get1ConsumidorInput,
+              resultado.consumidor, typeDocument,
+            ),
 
-            "credito-concedido": get20CreditoConcedidoInput(
+            "credito-concedido": convertSPCInput(
+              get20CreditoConcedidoInput,
               resultado["credito-concedido"],
             ),
-            "dados-adicionais-de-contato": get5233DadosAdicionaisDeContatoInput(
+            "dados-adicionais-de-contato": convertSPCInput(
+              get5233DadosAdicionaisDeContatoInput,
               resultado["dados-adicionais-de-contato"],
             ),
-            "dados-agencia-bancaria": get28DadosAgenciaBancariaInput(
+            "dados-agencia-bancaria": convertSPCInput(
+              get28DadosAgenciaBancariaInput,
               resultado["dados-agencia-bancaria"],
             ),
-            "endereco-cep-consultado": get4EnderecoCepConsultadoInput(
+            "endereco-cep-consultado": convertSPCInput(
+              get4EnderecoCepConsultadoInput,
               resultado["endereco-cep-consultado"],
             ),
 
-            "informacao-poder-judiciario": get67InformacaoPoderJudiciarioInput(
+            "informacao-poder-judiciario": convertSPCInput(
+              get67InformacaoPoderJudiciarioInput,
               resultado["informacao-poder-judiciario"],
             ),
-            "pendencia-financeira": get55PendenciaFinanceiraInput(
+            "pendencia-financeira": convertSPCInput(
+              get55PendenciaFinanceiraInput,
               resultado["pendencia-financeira"],
             ),
-            protesto: get17ProtestoInput(resultado.protesto),
-            spc: get8SPCInput(resultado.spc),
-            "telefone-consultado": get3TelefoneConsultadoInput(
+            protesto: convertSPCInput(get17ProtestoInput, resultado.protesto),
+            spc: convertSPCInput(get8SPCInput, resultado.spc),
+            "telefone-consultado": convertSPCInput(
+              get3TelefoneConsultadoInput,
               resultado["telefone-consultado"],
             ),
             "telefone-vinculado-assinante-consultado":
-              get44TelefoneVinculadoAssinanteConsultadoInput(
+              convertSPCInput(
+                get44TelefoneVinculadoAssinanteConsultadoInput,
                 resultado["telefone-vinculado-assinante-consultado"],
               ),
 
             ...(insumos.includes(5262) && {
-              "alerta-identidade-fraude": get5262AlertaIdentidadeFraudeInput(
+              "alerta-identidade-fraude": convertSPCInput(
+                get5262AlertaIdentidadeFraudeInput,
                 resultado["alerta-identidade-fraude"],
               ),
             }),
             ...(insumos.includes(5180) && {
-              "alerta-identidade": get5180AlertaIdentidadeInput(
+              "alerta-identidade": convertSPCInput(
+                get5180AlertaIdentidadeInput,
                 resultado["alerta-identidade"],
               ),
             }),
             ...(insumos.includes(5266) && {
-              "analise-documentos-spc": get5266AnaliseDocumentosSPCInput(
+              "analise-documentos-spc": convertSPCInput(
+                get5266AnaliseDocumentosSPCInput,
                 resultado["analise-documentos-spc"],
               ),
             }),
             ...(insumos.includes(5195) && {
-              "collection-score-plus": get5195CollectionScorePlusInput(
+              "collection-score-plus": convertSPCInput(
+                get5195CollectionScorePlusInput,
                 resultado["collection-score-plus"],
               ),
             }),
             ...(insumos.includes(5194) && {
               "comprometimento-renda-mensal-pf":
-                get5194ComprometimentoRendaMensalPfInput(
+                convertSPCInput(
+                  get5194ComprometimentoRendaMensalPfInput,
                   resultado["comprometimento-renda-mensal-pf"],
                 ),
             }),
             ...(insumos.includes(5241) && {
-              "grupo-economico": get5241GrupoEconomicoInput(
+              "grupo-economico": convertSPCInput(
+                get5241GrupoEconomicoInput,
                 resultado["grupo-economico"],
               ),
             }),
             ...(insumos.includes(5224) && {
               "indice-comportamento-gastos-cadastro-positivo":
-                get5224IndiceComportamentoGastosCadastroPositivoInput(
+                convertSPCInput(
+                  get5224IndiceComportamentoGastosCadastroPositivoInput,
                   resultado["indice-comportamento-gastos-cadastro-positivo"],
                 ),
             }),
             ...(insumos.includes(5227) && {
               "indice-pontualidade-pagamento-cadastro-positivo":
-                get5227IndicePontualidadePagamentoCadastroPositivoInput(
+                convertSPCInput(
+                  get5227IndicePontualidadePagamentoCadastroPositivoInput,
                   resultado["indice-pontualidade-pagamento-cadastro-positivo"],
                 ),
             }),
             ...(insumos.includes(5142) && {
-              "limite-credito-sugerido": get5142LimiteCreditoSugeridoInput(
+              "limite-credito-sugerido": convertSPCInput(
+                get5142LimiteCreditoSugeridoInput,
                 resultado["limite-credito-sugerido"],
               ),
             }),
             ...(insumos.includes(5232) && {
-              "perfil-comportamental": get5232PerfilComportamentalInput(
+              "perfil-comportamental": convertSPCInput(
+                get5232PerfilComportamentalInput,
                 resultado["perfil-comportamental"],
               ),
             }),
             ...(insumos.includes(5228) && {
-              "score-cadastro-positivo": get5228ScoreCadastroPositivoInput(
+              "score-cadastro-positivo": convertSPCInput(
+                get5228ScoreCadastroPositivoInput,
                 resultado["score-cadastro-positivo"],
               ),
             }),
 
             ...(insumos.includes(5268) && {
-              "valida-celular": get5268ValidaCelularInput(
+              "valida-celular": convertSPCInput(
+                get5268ValidaCelularInput,
                 resultado["valida-celular"],
               ),
             }),
 
             ...(insumos.includes(5256) && {
-              "insumo-operacao-scr": get5256InsumoOperacaoSCRInput(
+              "insumo-operacao-scr": convertSPCInput(
+                get5256InsumoOperacaoSCRInput,
                 resultado["insumo-operacao-scr"],
               ),
             }),
             ...(insumos.includes(5257) && {
               "insumo-historico-operacao-scr":
-                get5257InsumoHistoricoOperacaoSCRInput(
+                convertSPCInput(
+                  get5257InsumoHistoricoOperacaoSCRInput,
                   resultado["insumo-historico-operacao-scr"],
                 ),
             }),
 
             ...(insumos.includes(18) && {
-              acao: get18AcaoInput(resultado.acao),
+              acao: convertSPCInput(get18AcaoInput, resultado.acao),
             }),
 
             ...(insumos.includes(5253) && {
               "insumo-score-mais-positivo-financeiro":
-                get5253ScoreMaisPositivoFinanceiroInput(
+                convertSPCInput(
+                  get5253ScoreMaisPositivoFinanceiroInput,
                   resultado["insumo-score-mais-positivo-financeiro"],
                 ),
             }),
 
             ...(insumos.includes(5264) && {
-              "insumo_alerta-cpf-suspeito": get5264AlertaCPFSuspeitoInput(
+              "insumo_alerta-cpf-suspeito": convertSPCInput(
+                get5264AlertaCPFSuspeitoInput,
                 resultado["insumo_alerta-cpf-suspeito"],
               ),
             }),
             ...(insumos.includes(5239) && {
               "insumo-classificacao-risco-debitos-ativos":
-                get5239ClassificacaoRiscoDebitosAtivosInput(
+                convertSPCInput(
+                  get5239ClassificacaoRiscoDebitosAtivosInput,
                   resultado["insumo-classificacao-risco-debitos-ativos"],
                 ),
             }),
             ...(insumos.includes(77) && {
-              "spc-score-3-meses": get77SPCScore3MesesInput(
+              "spc-score-3-meses": convertSPCInput(
+                get77SPCScore3MesesInput,
                 resultado["spc-score-3-meses"],
               ),
             }),
             ...(insumos.includes(5122) && {
-              "renda-presumida-spc": get5122RendaPresumidaSPCInput(
+              "renda-presumida-spc": convertSPCInput(
+                get5122RendaPresumidaSPCInput,
                 resultado["renda-presumida-spc"],
               ),
             }),
           }
         : {
-            "alerta-documento": get19AlertaDocumentoInput(
+            "alerta-documento": convertSPCInput(
+              get19AlertaDocumentoInput,
               resultado["alerta-documento"],
             ),
-            "atividade-empresa": get64AtividadeEmpresaInput(
+            "atividade-empresa": convertSPCInput(
+              get64AtividadeEmpresaInput,
               resultado["atividade-empresa"],
             ),
-            "capital-social": get48CapitalSocialInput(
+            "capital-social": convertSPCInput(
+              get48CapitalSocialInput,
               resultado["capital-social"],
             ),
-            ccf: get15CCFInput(resultado.ccf),
+            ccf: convertSPCInput(get15CCFInput, resultado.ccf),
 
-            "cheque-lojista": get9ChequeLojistaInput(
+            "cheque-lojista": convertSPCInput(
+              get9ChequeLojistaInput,
               resultado["cheque-lojista"],
             ),
-            "cheque-sem-fundo-varejo": get69ChequeSemFundoVarejoInput(
+            "cheque-sem-fundo-varejo": convertSPCInput(
+              get69ChequeSemFundoVarejoInput,
               resultado["cheque-sem-fundo-varejo"],
             ),
-            "consulta-realizada": get21ConsultaRealizadaInput(
+            "consulta-realizada": convertSPCInput(
+              get21ConsultaRealizadaInput,
               resultado["consulta-realizada"],
             ),
-            consumidor: get1ConsumidorInput(resultado.consumidor, typeDocument),
+            consumidor: convertSPCInput(
+              get1ConsumidorInput,
+              resultado.consumidor, typeDocument,
+            ),
 
-            "credito-concedido": get20CreditoConcedidoInput(
+            "credito-concedido": convertSPCInput(
+              get20CreditoConcedidoInput,
               resultado["credito-concedido"],
             ),
-            "dados-adicionais-de-contato": get5233DadosAdicionaisDeContatoInput(
+            "dados-adicionais-de-contato": convertSPCInput(
+              get5233DadosAdicionaisDeContatoInput,
               resultado["dados-adicionais-de-contato"],
             ),
-            "dados-agencia-bancaria": get28DadosAgenciaBancariaInput(
+            "dados-agencia-bancaria": convertSPCInput(
+              get28DadosAgenciaBancariaInput,
               resultado["dados-agencia-bancaria"],
             ),
-            "endereco-cep-consultado": get4EnderecoCepConsultadoInput(
+            "endereco-cep-consultado": convertSPCInput(
+              get4EnderecoCepConsultadoInput,
               resultado["endereco-cep-consultado"],
             ),
 
-            "informacao-poder-judiciario": get67InformacaoPoderJudiciarioInput(
+            "informacao-poder-judiciario": convertSPCInput(
+              get67InformacaoPoderJudiciarioInput,
               resultado["informacao-poder-judiciario"],
             ),
-            "pendencia-financeira": get55PendenciaFinanceiraInput(
+            "pendencia-financeira": convertSPCInput(
+              get55PendenciaFinanceiraInput,
               resultado["pendencia-financeira"],
             ),
-            protesto: get17ProtestoInput(resultado.protesto),
-            spc: get8SPCInput(resultado.spc),
-            "telefone-consultado": get3TelefoneConsultadoInput(
+            protesto: convertSPCInput(get17ProtestoInput, resultado.protesto),
+            spc: convertSPCInput(get8SPCInput, resultado.spc),
+            "telefone-consultado": convertSPCInput(
+              get3TelefoneConsultadoInput,
               resultado["telefone-consultado"],
             ),
             "telefone-vinculado-assinante-consultado":
-              get44TelefoneVinculadoAssinanteConsultadoInput(
+              convertSPCInput(
+                get44TelefoneVinculadoAssinanteConsultadoInput,
                 resultado["telefone-vinculado-assinante-consultado"],
               ),
 
             ...(insumos.includes(5244) && {
-              "divida-publica-cadin": get5244DividaPublicaCadinInput(
+              "divida-publica-cadin": convertSPCInput(
+                get5244DividaPublicaCadinInput,
                 resultado["divida-publica-cadin"],
               ),
             }),
             ...(insumos.includes(5178) && {
-              "faturamento-presumido": get5178FaturamentoPresumidoInput(
+              "faturamento-presumido": convertSPCInput(
+                get5178FaturamentoPresumidoInput,
                 resultado["faturamento-presumido"],
               ),
             }),
             ...(insumos.includes(5185) && {
-              "gasto-estimado-pj": get5185GastoEstimadoPJInput(
+              "gasto-estimado-pj": convertSPCInput(
+                get5185GastoEstimadoPJInput,
                 resultado["gasto-estimado-pj"],
               ),
             }),
             ...(insumos.includes(5241) && {
-              "grupo-economico": get5241GrupoEconomicoInput(
+              "grupo-economico": convertSPCInput(
+                get5241GrupoEconomicoInput,
                 resultado["grupo-economico"],
               ),
             }),
             ...(insumos.includes(5224) && {
               "indice-comportamento-gastos-cadastro-positivo":
-                get5224IndiceComportamentoGastosCadastroPositivoInput(
+                convertSPCInput(
+                  get5224IndiceComportamentoGastosCadastroPositivoInput,
                   resultado["indice-comportamento-gastos-cadastro-positivo"],
                 ),
             }),
             ...(insumos.includes(5227) && {
               "indice-pontualidade-pagamento-cadastro-positivo":
-                get5227IndicePontualidadePagamentoCadastroPositivoInput(
+                convertSPCInput(
+                  get5227IndicePontualidadePagamentoCadastroPositivoInput,
                   resultado["indice-pontualidade-pagamento-cadastro-positivo"],
                 ),
             }),
 
             ...(insumos.includes(5229) && {
-              "score-pj": get5229ScorePJInput(resultado["score-pj"]),
+              "score-pj": convertSPCInput(get5229ScorePJInput, resultado["score-pj"]),
             }),
             ...(insumos.includes(5245) && {
-              "score-recuperacao-pj": get5245ScoreRecuperacaoPJInput(
+              "score-recuperacao-pj": convertSPCInput(
+                get5245ScoreRecuperacaoPJInput,
                 resultado["score-recuperacao-pj"],
               ),
             }),
 
             ...(insumos.includes(5256) && {
-              "insumo-operacao-scr": get5256InsumoOperacaoSCRInput(
+              "insumo-operacao-scr": convertSPCInput(
+                get5256InsumoOperacaoSCRInput,
                 resultado["insumo-operacao-scr"],
               ),
             }),
             ...(insumos.includes(5257) && {
               "insumo-historico-operacao-scr":
-                get5257InsumoHistoricoOperacaoSCRInput(
+                convertSPCInput(
+                  get5257InsumoHistoricoOperacaoSCRInput,
                   resultado["insumo-historico-operacao-scr"],
                 ),
             }),
 
             ...(insumos.includes(18) && {
-              acao: get18AcaoInput(resultado.acao),
+              acao: convertSPCInput(get18AcaoInput, resultado.acao),
             }),
 
             ...(insumos.includes(49) && {
-              administrador: get49AdministradorInput(resultado.administrador),
+              administrador: convertSPCInput(
+                get49AdministradorInput,
+                resultado.administrador,
+              ),
             }),
 
             ...(insumos.includes(77) && {
-              "spc-score-3-meses": get77SPCScore3MesesInput(
+              "spc-score-3-meses": convertSPCInput(
+                get77SPCScore3MesesInput,
                 resultado["spc-score-3-meses"],
               ),
             }),
@@ -365,8 +446,10 @@ export async function spc695UseCase(
 
     return result;
   } catch (error) {
+    if (error instanceof FriendlyError) throw error;
+
     throw new FriendlyError({
-      message: AppError.GET_ALL_BRANDS_ERROR,
+      message: "Erro ao consultar SPC Mais.",
       originalError: error,
       context: "spc695UseCase",
       code: 400,
