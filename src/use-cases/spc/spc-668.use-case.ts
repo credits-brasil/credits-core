@@ -50,7 +50,7 @@ export async function spc668UseCase(
   const allowedInsumos = new Set([
     18, 49, 5244, 5178, 5241, 5224, 5226, 5227, 5193, 5263, 5257, 5260, 5240,
     5256, 5265, 5179, 5225, 24, 5258, 5186, 5267, 5184, 5229, 5247, 5245, 23,
-    77, 5183, 78, 5185,
+    77, 5183,
   ]);
 
   const invalidInsumos = insumos.filter(
