@@ -18,6 +18,12 @@ export interface AuthVerifyResetCodeBody {
   code: string;
 }
 
+export interface AuthResetUserPasswordBody {
+  email: string;
+  code: string;
+  newPassword: string;
+}
+
 export interface AuthResetPasswordBody {
   email: string;
   token: string;

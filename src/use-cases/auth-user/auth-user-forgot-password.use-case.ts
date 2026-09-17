@@ -4,6 +4,7 @@ import { AppError } from "@/constants/auth";
 import { findUserByEmail } from "@/repositories/user.repository";
 import { prisma } from "@/repositories/prisma";
 import { sendPasswordResetCode } from "@/services/email.service";
+import { updateUser } from "@/repositories/user.repository";
 import { FriendlyError } from "@/utils";
 
 const RESET_CODE_EXPIRATION_MINUTES = 2;
@@ -114,6 +115,53 @@ export async function verifyUserPasswordResetCode(email: string, code: string) {
     });
   }
 
+  return { valid: true };
+}
+
+export async function resetUserPassword(
+  email: string,
+  code: string,
+  newPassword: string,
+) {
+  const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+  const normalizedCode = typeof code === "string" ? code.trim() : "";
+  const normalizedPassword = typeof newPassword === "string" ? newPassword : "";
+  const user = await findUserByEmail(normalizedEmail);
+
+  if (!user || normalizedPassword.length < 8) {
+    throw new FriendlyError({
+      message: AppError.INVALID_PAYLOAD,
+      context: "auth.user.resetPassword.validation",
+      code: 400,
+    });
+  }
+
+  const record = await prisma.passwordResetCode.findFirst({
+    where: { userId: user.id, usedAt: null },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (record?.expiresAt && record.expiresAt.getTime() < Date.now()) {
+    await prisma.passwordResetCode.update({
+      where: { id: record.id },
+      data: { usedAt: new Date() },
+    });
+
+    throw new FriendlyError({
+      message: AppError.RESET_TOKEN_EXPIRED,
+      context: "auth.user.resetPassword.expiredCode",
+      code: 410,
+    });
+  }
+
+  if (!record || !/^\d{6}$/.test(normalizedCode) || !matchesResetCode(normalizedCode, record.codeHash)) {
+    throw new FriendlyError({
+      message: AppError.RESET_TOKEN_INVALID,
+      context: "auth.user.resetPassword.invalidCode",
+      code: 400,
+    });
+  }
+
   const consumed = await prisma.passwordResetCode.updateMany({
     where: { id: record.id, usedAt: null },
     data: { usedAt: new Date() },
@@ -122,10 +170,12 @@ export async function verifyUserPasswordResetCode(email: string, code: string) {
   if (consumed.count !== 1) {
     throw new FriendlyError({
       message: AppError.RESET_TOKEN_INVALID,
-      context: "auth.user.verifyResetCode.alreadyUsed",
+      context: "auth.user.resetPassword.alreadyUsed",
       code: 400,
     });
   }
 
-  return { valid: true };
+  await updateUser(user.id, { password: normalizedPassword });
+
+  return { success: true };
 }

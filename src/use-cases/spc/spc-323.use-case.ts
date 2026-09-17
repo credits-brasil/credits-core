@@ -50,7 +50,7 @@ export async function spc323UseCase(
 ) {
   const allowedInsumos = new Set([
     5180, 5262, 5195, 5194, 5244, 5178, 5185, 5241, 5224, 5227, 5190, 5184,
-    5228, 5229, 78, 77, 5268,
+    5228, 5229, 78, 77, 5268, 5239, 5122, 5142, 5256, 5257, 5264
   ]);
 
   const invalidInsumos = insumos.filter(
@@ -73,7 +73,12 @@ export async function spc323UseCase(
       insumos,
     });
 
+    const resultado = json["S:Envelope"]["S:Body"]["ns2:resultado"];
+
     return {
+      protocolo: resultado.protocolo?.$,
+      operador: resultado.operador?.$,
+
       // DEFAULT
 
       // 19
