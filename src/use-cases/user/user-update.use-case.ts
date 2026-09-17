@@ -7,6 +7,14 @@ import {
 } from "@/repositories/user.repository";
 import { FriendlyError } from "@/utils";
 
+const normalizeUserRole = (role?: "ADMIN" | "USER" | "OPERATOR") => {
+  if (role === "OPERATOR") {
+    return "USER" as const;
+  }
+
+  return (role ?? "USER") as "ADMIN" | "USER";
+};
+
 export async function userUpdateUseCase(
   companyId: string,
   userRelationId: string,
@@ -43,7 +51,7 @@ export async function userUpdateUseCase(
   }
 
   return updateCompanyUser(userRelationId, {
-    role: input.role,
-    status: input.status,
+    role: normalizeUserRole(input.role ?? relation.role),
+    status: input.status ?? relation.status,
   });
 }

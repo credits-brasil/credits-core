@@ -12,11 +12,20 @@ import {
 } from "@/repositories/user.repository";
 import { FriendlyError } from "@/utils";
 
+const normalizeUserRole = (role?: "ADMIN" | "USER" | "OPERATOR") => {
+  if (role === "OPERATOR") {
+    return "USER" as const;
+  }
+
+  return (role ?? "USER") as "ADMIN" | "USER";
+};
+
 export async function userCreateUseCase(
   companyId: string,
   input: { user?: string; name: string; cpf: string; email?: string; phone: string; password?: string; role?: "ADMIN" | "USER"; status?: "ACTIVE" | "INACTIVE" },
 ) {
   const company = await findCompanyById(companyId);
+  const normalizedRole = normalizeUserRole(input.role);
 
   if (!company || company.status === "DELETED") {
     throw new FriendlyError({
@@ -104,13 +113,13 @@ export async function userCreateUseCase(
 
   if (existingRelation) {
     return updateCompanyUser(existingRelation.id, {
-      role: input.role ?? existingRelation.role,
+      role: normalizeUserRole(input.role ?? existingRelation.role),
       status: input.status ?? "ACTIVE",
     });
   }
 
   return createCompanyUser(companyId, user.id, {
-    role: input.role ?? "USER",
+    role: normalizedRole,
     status: input.status ?? "ACTIVE",
   });
 }

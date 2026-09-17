@@ -1,3 +1,5 @@
+export type CompanyUserRole = "ADMIN" | "USER" | "OPERATOR";
+
 export interface CompanyUserCreateBody {
   user?: string;
   name: string;
@@ -5,7 +7,7 @@ export interface CompanyUserCreateBody {
   email?: string;
   phone: string;
   password: string;
-  role?: "ADMIN" | "USER";
+  role?: CompanyUserRole;
   status?: "ACTIVE" | "INACTIVE";
 }
 
@@ -16,7 +18,7 @@ export interface CompanyUserUpdateBody {
   email?: string;
   phone?: string;
   password?: string;
-  role?: "ADMIN" | "USER";
+  role?: CompanyUserRole;
   status?: "ACTIVE" | "INACTIVE";
 }
 

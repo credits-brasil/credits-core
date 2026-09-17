@@ -146,6 +146,7 @@ enum UserRole {
 enum UserCompanyStatus {
   ACTIVE
   INACTIVE
+  DELETED
 
   @@map("OperatorCompanyStatus")
 }

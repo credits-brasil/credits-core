@@ -19,6 +19,7 @@ const safeSelect = {
       email: true,
       phone: true,
       password: true,
+      firstAccess: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -64,6 +65,40 @@ export const listCompanyUsersByCompany = (companyId: string) => {
   });
 };
 
+export const listUsersWithCompanies = () => {
+  return prisma.user.findMany({
+    select: {
+      id: true,
+      user: true,
+      name: true,
+      cpf: true,
+      email: true,
+      phone: true,
+      firstAccess: true,
+      createdAt: true,
+      updatedAt: true,
+      companies: {
+        select: {
+          id: true,
+          role: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          company: {
+            select: {
+              id: true,
+              name: true,
+              cnpj: true,
+              status: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
 export const updateCompanyUser = (id: string, data: { role?: string; status?: string }) => {
   return prisma.companyUser.update({
     where: { id },
@@ -101,6 +136,7 @@ export const createUser = (data: { user?: string | null; name: string; cpf: stri
       email: true,
       phone: true,
       password: true,
+      firstAccess: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -197,6 +233,7 @@ export const updateUser = (id: string, data: { user?: string; name?: string; cpf
       email: true,
       phone: true,
       password: true,
+      firstAccess: true,
       createdAt: true,
       updatedAt: true,
     },
