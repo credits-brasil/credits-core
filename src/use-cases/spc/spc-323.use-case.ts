@@ -48,13 +48,46 @@ export async function spc323UseCase(
   typeDocument: "CPF" | "CNPJ",
   insumos: number[],
 ) {
-  const allowedInsumos = new Set([
-    5180, 5262, 5195, 5194, 5244, 5178, 5185, 5241, 5224, 5227, 5190, 5184,
-    5228, 5229, 78, 77, 5268, 5239, 5122, 5142, 5256, 5257, 5264
-  ]);
+  const allowedInsumos: Record<"CPF" | "CNPJ", number[]> = {
+    CPF: [
+      5180,
+      5262,
+      5195,
+      5194,
+      5241,
+      5224,
+      5227,
+      5190,
+      5228,
+      78,
+      77,
+      5268,
+      5239,
+      5122,
+      5142,
+      5256,
+      5257,
+      5264,
+    ],
+    CNPJ: [
+      5244,
+      5178,
+      5185,
+      5241,
+      5224,
+      5227,
+      5184,
+      5228,
+      5229,
+      78,
+      77,
+      5256,
+      5257,
+    ],
+  };
 
   const invalidInsumos = insumos.filter(
-    (insumo) => !allowedInsumos.has(insumo),
+    (insumo) => !allowedInsumos[typeDocument].includes(insumo),
   );
 
   if (invalidInsumos.length > 0) {
@@ -86,15 +119,20 @@ export async function spc323UseCase(
         json["S:Envelope"]["S:Body"]["ns2:resultado"]["alerta-documento"],
       ),
 
-      // 64
-      "atividade-empresa": get64AtividadeEmpresaInput(
-        json["S:Envelope"]["S:Body"]["ns2:resultado"]["atividade-empresa"],
-      ),
+      ...(typeDocument === "CNPJ" && {
+        // 64
+        "atividade-empresa": get64AtividadeEmpresaInput(
+          resultado["atividade-empresa"],
+        ),
 
-      // 48
-      "capital-social": get48CapitalSocialInput(
-        json["S:Envelope"]["S:Body"]["ns2:resultado"]["capital-social"],
-      ),
+        // 48
+        "capital-social": get48CapitalSocialInput(
+          resultado["capital-social"],
+        ),
+
+        // 2
+        "grafia-pj": get2GrafiaPJInput(resultado["grafia-pj"]),
+      }),
 
       // 15
       ccf: get15CCFInput(json["S:Envelope"]["S:Body"]["ns2:resultado"].ccf),
@@ -162,11 +200,6 @@ export async function spc323UseCase(
         json["S:Envelope"]["S:Body"]["ns2:resultado"][
           "endereco-cep-consultado"
         ],
-      ),
-
-      // 2
-      "grafia-pj": get2GrafiaPJInput(
-        json["S:Envelope"]["S:Body"]["ns2:resultado"]["grafia-pj"],
       ),
 
       // 67

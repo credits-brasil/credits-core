@@ -86,11 +86,11 @@ model User {
 model PasswordResetCode {
   id        String   @id @default(uuid())
   userId    String
-  codeHash  String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
   @@index([userId, usedAt])

@@ -1,30 +1,12 @@
-import { randomBytes, randomInt, scryptSync, timingSafeEqual } from "node:crypto";
+import { randomInt } from "node:crypto";
 
 import { AppError } from "@/constants/auth";
 import { findUserByEmail } from "@/repositories/user.repository";
 import { prisma } from "@/repositories/prisma";
 import { sendPasswordResetCode } from "@/services/email.service";
-import { updateUser } from "@/repositories/user.repository";
-import { FriendlyError } from "@/utils";
+import { FriendlyError, hashPassword } from "@/utils";
 
 const RESET_CODE_EXPIRATION_MINUTES = 2;
-
-function hashResetCode(code: string, salt = randomBytes(16).toString("hex")) {
-  return `${salt}:${scryptSync(code, salt, 64).toString("hex")}`;
-}
-
-function matchesResetCode(code: string, storedHash: string) {
-  const [salt, hash] = storedHash.split(":");
-
-  if (!salt || !hash || !/^[a-f0-9]{128}$/i.test(hash)) {
-    return false;
-  }
-
-  const expected = Buffer.from(hash, "hex");
-  const actual = scryptSync(code, salt, 64);
-
-  return timingSafeEqual(expected, actual);
-}
 
 export async function authUserForgotPasswordUseCase(email: string) {
   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
@@ -65,7 +47,7 @@ export async function authUserForgotPasswordUseCase(email: string) {
   await prisma.passwordResetCode.create({
     data: {
       userId: user.id,
-      codeHash: hashResetCode(token),
+      code: token,
       expiresAt: new Date(expiresAt),
     },
   });
@@ -106,7 +88,7 @@ export async function verifyUserPasswordResetCode(email: string, code: string) {
   if (
     !record ||
     !/^\d{6}$/.test(normalizedCode) ||
-    !matchesResetCode(normalizedCode, record.codeHash)
+    record.code !== normalizedCode
   ) {
     throw new FriendlyError({
       message: AppError.RESET_TOKEN_INVALID,
@@ -154,7 +136,7 @@ export async function resetUserPassword(
     });
   }
 
-  if (!record || !/^\d{6}$/.test(normalizedCode) || !matchesResetCode(normalizedCode, record.codeHash)) {
+  if (!record || !/^\d{6}$/.test(normalizedCode) || record.code !== normalizedCode) {
     throw new FriendlyError({
       message: AppError.RESET_TOKEN_INVALID,
       context: "auth.user.resetPassword.invalidCode",
@@ -162,20 +144,25 @@ export async function resetUserPassword(
     });
   }
 
-  const consumed = await prisma.passwordResetCode.updateMany({
-    where: { id: record.id, usedAt: null },
-    data: { usedAt: new Date() },
-  });
-
-  if (consumed.count !== 1) {
-    throw new FriendlyError({
-      message: AppError.RESET_TOKEN_INVALID,
-      context: "auth.user.resetPassword.alreadyUsed",
-      code: 400,
+  await prisma.$transaction(async (transaction) => {
+    const consumed = await transaction.passwordResetCode.updateMany({
+      where: { id: record.id, usedAt: null },
+      data: { usedAt: new Date() },
     });
-  }
 
-  await updateUser(user.id, { password: normalizedPassword });
+    if (consumed.count !== 1) {
+      throw new FriendlyError({
+        message: AppError.RESET_TOKEN_INVALID,
+        context: "auth.user.resetPassword.alreadyUsed",
+        code: 400,
+      });
+    }
+
+    await transaction.user.update({
+      where: { id: user.id },
+      data: { password: hashPassword(normalizedPassword) },
+    });
+  });
 
   return { success: true };
 }

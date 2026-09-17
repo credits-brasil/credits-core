@@ -77,9 +77,10 @@ export async function spc337UseCase(
       insumos,
     });
 
-    return json
-    
     return {
+      protocolo: json["S:Envelope"]["S:Body"]["ns2:resultado"].protocolo?.$,
+      operador: json["S:Envelope"]["S:Body"]["ns2:resultado"].operador?.$,
+
       // DEFAULT
 
       // 18
