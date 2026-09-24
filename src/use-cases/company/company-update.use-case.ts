@@ -5,6 +5,7 @@ import {
   updateCompany,
 } from "@/repositories/company.repository";
 import { FriendlyError } from "@/utils";
+import { encryptCompanyPassword } from "@/utils/kms";
 
 export async function companyUpdateUseCase(
   id: string,
@@ -24,6 +25,11 @@ export async function companyUpdateUseCase(
 
   if (!nextInput.operator_SPC_password || nextInput.operator_SPC_password.trim() === "") {
     nextInput.operator_SPC_password = company.operator_SPC_password ?? undefined;
+  } else {
+    nextInput.operator_SPC_password = await encryptCompanyPassword(
+      company.id,
+      nextInput.operator_SPC_password.trim(),
+    );
   }
 
   return updateCompany(id, {

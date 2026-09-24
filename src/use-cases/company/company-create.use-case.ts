@@ -3,8 +3,10 @@ import { CreateCompanyInput } from "@/interfaces/company";
 import {
   createCompany,
   findCompanyByCnpj,
+  updateCompany,
 } from "@/repositories/company.repository";
 import { FriendlyError } from "@/utils";
+import { encryptCompanyPassword } from "@/utils/kms";
 
 export async function companyCreateUseCase(input: CreateCompanyInput) {
   const cnpj = input.cnpj?.trim();
@@ -30,11 +32,25 @@ export async function companyCreateUseCase(input: CreateCompanyInput) {
     });
   }
 
-  return createCompany({
+  const createdCompany = await createCompany({
     ...input,
     cnpj,
     name,
     operator_SPC,
-    operator_SPC_password,
   });
+
+  if (operator_SPC_password) {
+    const encryptedPassword = await encryptCompanyPassword(
+      createdCompany.id,
+      operator_SPC_password,
+    );
+
+    const companyWithEncryptedPassword = await updateCompany(createdCompany.id, {
+      operator_SPC_password: encryptedPassword,
+    });
+
+    return companyWithEncryptedPassword;
+  }
+
+  return createdCompany;
 }
