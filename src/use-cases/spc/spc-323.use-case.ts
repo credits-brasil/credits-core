@@ -42,12 +42,21 @@ import { get77SPCScore3MesesInput } from "@/utils/inputs/get-77-spc-score-3-mese
 import { get5228ScoreCadastroPositivoInput } from "@/utils/inputs/get-5228-score-cadastro-positivo.input";
 import { get5190IndiceRelacionamentoMercadoPfInput } from "@/utils/inputs/get-5190-indice-relacionamento-mercado-pf.input";
 import { get5268ValidaCelularInput } from "@/utils/inputs/get-5268-valida-celular.input";
+import { createOrder, finishOrder } from "@/repositories/order.repository";
 
 export async function spc323UseCase(
   document: string,
   typeDocument: "CPF" | "CNPJ",
   insumos: number[],
+  audit: { userId: string; userName: string; companyId: string; companyName: string; ip: string; host: string },
 ) {
+  const order = await createOrder({
+    userId: audit.userId, userName: audit.userName, companyId: audit.companyId,
+    companyName: audit.companyName, productName: "323-spc-mix-mais",
+    typeDocument, document, inputs: insumos, ip: audit.ip, host: audit.host,
+  });
+  const startedAt = Date.now();
+
   const allowedInsumos: Record<"CPF" | "CNPJ", number[]> = {
     CPF: [
       5180,
@@ -108,6 +117,7 @@ export async function spc323UseCase(
 
     const resultado = json["S:Envelope"]["S:Body"]["ns2:resultado"];
 
+    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS");
     return {
       protocolo: resultado.protocolo?.$,
       operador: resultado.operador?.$,
@@ -386,6 +396,7 @@ export async function spc323UseCase(
       }),
     };
   } catch (error) {
+    await finishOrder(order.id, Date.now() - startedAt, "FAILED");
     throw new FriendlyError({
       message: AppError.GET_ALL_BRANDS_ERROR,
       originalError: error,

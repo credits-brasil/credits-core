@@ -6,6 +6,7 @@ import {
   authFirstAccessPasswordController,
   authForgotPasswordController,
   authLoginController,
+  authAdminRefreshController,
   authResetPasswordController,
 } from "@/controllers/auth-admin";
 
@@ -30,6 +31,10 @@ export async function authAdminRoutes(server: FastifyInstance) {
   server.post<{
     Body: AuthLoginBody;
   }>("/api/auth/admin/login", authLoginController);
+
+  server.post<{ Body: { refreshToken: string } }>(
+    "/api/auth/admin/refresh", authAdminRefreshController,
+  );
 
   server.post<{
     Body: AuthForgotPasswordBody;

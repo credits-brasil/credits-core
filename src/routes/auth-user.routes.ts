@@ -4,6 +4,7 @@ import {
   authUserFirstAccessPasswordController,
   authUserForgotPasswordController,
   authUserLoginController,
+  authUserRefreshController,
   authUserResetPasswordController,
   authUserVerifyResetCodeController,
 } from "@/controllers/auth-user";
@@ -19,6 +20,10 @@ export async function authUserRoutes(server: FastifyInstance) {
   server.post<{
     Body: AuthLoginBody;
   }>("/api/auth/user/login", authUserLoginController);
+
+  server.post<{ Body: { refreshToken: string } }>(
+    "/api/auth/user/refresh", authUserRefreshController,
+  );
 
   server.post<{
     Body: AuthForgotPasswordBody;

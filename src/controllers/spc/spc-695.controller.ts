@@ -5,14 +5,24 @@ import { SPCUseCases } from "@/use-cases/spc";
 import { FriendlyError } from "@/utils/friendly-error";
 
 import { AppError, AppMessages } from "@/constants/spc";
+import { requireUserCompany } from "@/utils/user-auth";
 
-export const spc695Controller = async (request: FastifyRequest<{ Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] } }>, reply: FastifyReply) => {
-    const { document, typeDocument, insumos } = request.body;
+export const spc695Controller = async (request: FastifyRequest<{ Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[]; companyId: string; telefone?: string } }>, reply: FastifyReply) => {
+    const { document, typeDocument, insumos, companyId } = request.body;
+  const authenticatedUser = await requireUserCompany(request, reply, companyId);
+  if (!authenticatedUser) return;
 
   const spcUseCases = new SPCUseCases();
 
   try {
-    const spc = await spcUseCases.spc695(document, typeDocument, insumos);
+    const spc = await spcUseCases.spc695(document, typeDocument, insumos, {
+      userId: authenticatedUser.id,
+      userName: authenticatedUser.name,
+      companyId: authenticatedUser.companyId,
+      companyName: authenticatedUser.companyName,
+      ip: request.ip,
+      host: request.headers.host ?? "",
+    });
 
     return reply.code(200).send({ statusCode: 200, message: AppMessages.GET_ALL_BRANDS_SUCCESS, spc });
   } catch (error: unknown) {

@@ -45,12 +45,21 @@ import { get5265InsumoParticipacaoMercadoCapitaisInput } from "@/utils/inputs/ge
 import { get5267QuantidadeFuncionarioInput } from "@/utils/inputs/get-5267-quantidade-funcionario.input";
 import { get5186QuadroSocialMaisCompletoPjInput } from "@/utils/inputs/get-5186-quadro-social-mais-completo-pj.input";
 import { get5258ParticipacaoEmpresaInput } from "@/utils/inputs/get-5258-participacao-empresa.input";
+import { createOrder, finishOrder } from "@/repositories/order.repository";
 
 export async function spc337UseCase(
   document: string,
   typeDocument: "CPF" | "CNPJ",
   insumos: number[],
+  audit: { userId: string; userName: string; companyId: string; companyName: string; ip: string; host: string },
 ) {
+  const order = await createOrder({
+    userId: audit.userId, userName: audit.userName, companyId: audit.companyId,
+    companyName: audit.companyName, productName: "337-spc-relatorio",
+    typeDocument, document, inputs: insumos, ip: audit.ip, host: audit.host,
+  });
+  const startedAt = Date.now();
+
   const allowedInsumos = new Set([
     5244, 5178, 5185, 5241, 5224, 5226, 5227, 5193, 5263, 5249, 5257, 5179,
     5225, 5229, 5247, 5245, 78, 77, 5183, 5240, 5260, 5184, 5265, 5267, 5186,
@@ -77,6 +86,7 @@ export async function spc337UseCase(
       insumos,
     });
 
+    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS");
     return {
       protocolo: json["S:Envelope"]["S:Body"]["ns2:resultado"].protocolo?.$,
       operador: json["S:Envelope"]["S:Body"]["ns2:resultado"].operador?.$,
@@ -419,6 +429,7 @@ export async function spc337UseCase(
       }),
     };
   } catch (error) {
+    await finishOrder(order.id, Date.now() - startedAt, "FAILED");
     throw new FriendlyError({
       message: AppError.GET_ALL_BRANDS_ERROR,
       originalError: error,

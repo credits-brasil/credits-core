@@ -48,15 +48,21 @@ export async function spcRoutes(server: FastifyInstance) {
   }>("/api/257", spc257Controller);
 
   server.post<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
+    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[]; companyId: string; telefone?: string };
   }>("/api/323-spc-mix-mais", spc323Controller);
 
   server.post<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: string[] };
+    Body: {
+      document: string;
+      typeDocument: "CPF" | "CNPJ";
+      insumos: string[];
+      companyId: string;
+      telefone?: string;
+    };
   }>("/api/325-spc-maxi", spc325Controller);
 
   server.post<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
+    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[]; companyId: string; telefone?: string };
   }>("/api/337-spc-relatorio", spc337Controller);
 
   server.get<{
@@ -80,7 +86,7 @@ export async function spcRoutes(server: FastifyInstance) {
   }>("/api/628", spc628Controller);
 
   server.post<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
+    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[]; companyId: string; telefone?: string };
   }>("/api/629-spc-positivo-intermediario-pj", spc629Controller);
 
   server.get<{
@@ -100,7 +106,7 @@ export async function spcRoutes(server: FastifyInstance) {
   }>("/api/633", spc633Controller);
 
   server.post<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
+    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[]; companyId: string; telefone?: string };
   }>("/api/668-spc-avancada-pj", spc668Controller);
 
   server.get<{
@@ -124,7 +130,7 @@ export async function spcRoutes(server: FastifyInstance) {
   }>("/api/678", spc678Controller);
 
   server.post<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
+    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[]; companyId: string; telefone?: string };
   }>("/api/695-spc-mais", spc695Controller);
 
   server.get<{

@@ -23,7 +23,6 @@ import { spc677UseCase } from "./spc-677.use-case";
 import { spc678UseCase } from "./spc-678.use-case";
 import { spc695UseCase } from "./spc-695.use-case";
 import { spc940UseCase } from "./spc-940.use-case";
-
 export class SPCUseCases {
   async spc11(
     document: string,
@@ -61,24 +60,35 @@ export class SPCUseCases {
     document: string,
     typeDocument: "CPF" | "CNPJ",
     insumos: number[],
+    audit: Parameters<typeof spc323UseCase>[3],
   ) {
-    return spc323UseCase(document, typeDocument, insumos);
+    return spc323UseCase(document, typeDocument, insumos, audit);
   }
 
   async spc325(
     document: string,
     typeDocument: "CPF" | "CNPJ",
     insumos: string[],
+    audit: {
+      userId: string;
+      userName: string;
+      companyId: string;
+      companyName: string;
+      telefone?: string;
+      ip: string;
+      host: string;
+    },
   ) {
-    return spc325UseCase(document, typeDocument, insumos);
+    return spc325UseCase(document, typeDocument, insumos, audit);
   }
 
   async spc337(
     document: string,
     typeDocument: "CPF" | "CNPJ",
     insumos: number[],
+    audit: Parameters<typeof spc337UseCase>[3],
   ) {
-    return spc337UseCase(document, typeDocument, insumos);
+    return spc337UseCase(document, typeDocument, insumos, audit);
   }
 
   async spc454(
@@ -125,8 +135,9 @@ export class SPCUseCases {
     document: string,
     typeDocument: "CPF" | "CNPJ",
     insumos: number[],
+    audit: Parameters<typeof spc629UseCase>[3],
   ) {
-    return spc629UseCase(document, typeDocument, insumos);
+    return spc629UseCase(document, typeDocument, insumos, audit);
   }
 
   async spc630(
@@ -165,8 +176,9 @@ export class SPCUseCases {
     document: string,
     typeDocument: "CPF" | "CNPJ",
     insumos: number[],
+    audit: Parameters<typeof spc668UseCase>[3],
   ) {
-    return spc668UseCase(document, typeDocument, insumos);
+    return spc668UseCase(document, typeDocument, insumos, audit);
   }
 
   async spc674(
@@ -213,8 +225,9 @@ export class SPCUseCases {
     document: string,
     typeDocument: "CPF" | "CNPJ",
     insumos: number[],
+    audit: Parameters<typeof spc695UseCase>[3],
   ) {
-    return spc695UseCase(document, typeDocument, insumos);
+    return spc695UseCase(document, typeDocument, insumos, audit);
   }
 
   async spc940(

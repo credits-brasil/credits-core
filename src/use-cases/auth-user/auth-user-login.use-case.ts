@@ -1,10 +1,11 @@
-import { randomUUID, timingSafeEqual, scryptSync } from "node:crypto";
+import { timingSafeEqual, scryptSync } from "node:crypto";
 
 import { AppError } from "@/constants/auth";
 import { LoginUserAuthInput } from "@/interfaces/auth";
 import { findUserByEmail } from "@/repositories/user.repository";
 import { listCompaniesByUser } from "@/repositories/company.repository";
 import { FriendlyError } from "@/utils";
+import { issueSession } from "@/services/session.service";
 
 function verifyPassword(password: string, storedHash: string) {
   const [salt, hash, extra] = storedHash.split(":");
@@ -47,8 +48,10 @@ async function createSession(user: {
 }) {
   const companies = await listCompaniesByUser(user.id);
 
+  const tokens = await issueSession({ kind: "USER", userId: user.id });
+
   return {
-    accessToken: `user_auth_${randomUUID()}`,
+    ...tokens,
     user: {
       ...toAuthUser(user),
       companies: companies.map((company) => ({

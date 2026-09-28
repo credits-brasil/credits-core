@@ -2,6 +2,7 @@ import sgMail from "@sendgrid/mail";
 
 const PASSWORD_RESET_TEMPLATE_ID = "d-ac26e43697384e2d92d19842a990f153";
 const ADMIN_WELCOME_TEMPLATE_ID = "d-6a5b698a089145fba2721351e8ec0f03";
+const USER_WELCOME_TEMPLATE_ID = "d-fe982c529957400bb13ce18a6551507d";
 
 interface PasswordResetCodeInput {
   email: string;
@@ -13,6 +14,13 @@ interface PasswordResetCodeInput {
 interface AdminWelcomeEmailInput {
   email: string;
   name?: string;
+  temporaryPassword: string;
+  loginUrl?: string;
+}
+
+interface UserWelcomeEmailInput {
+  email: string;
+  name: string;
   temporaryPassword: string;
   loginUrl?: string;
 }
@@ -61,6 +69,29 @@ export async function sendAdminWelcomeEmail(input: AdminWelcomeEmailInput) {
     dynamicTemplateData: {
       email: input.email,
       name: input.name || "",
+      temporaryPassword: input.temporaryPassword,
+      loginUrl,
+      year: new Date().getFullYear(),
+    },
+  });
+}
+
+export async function sendUserWelcomeEmail(input: UserWelcomeEmailInput) {
+  const { apiKey, fromEmail } = getSendGridConfig();
+  const loginUrl =
+    input.loginUrl ||
+    `${process.env.FRONTEND_URL || "https://creditsbrasil.com.br"}`.replace(/\/$/, "");
+
+  sgMail.setApiKey(apiKey);
+
+  await sgMail.send({
+    to: input.email,
+    from: fromEmail,
+    templateId: USER_WELCOME_TEMPLATE_ID,
+    dynamicTemplateData: {
+      userName: input.name,
+      loginType: "E-mail",
+      login: input.email,
       temporaryPassword: input.temporaryPassword,
       loginUrl,
       year: new Date().getFullYear(),

@@ -10,6 +10,7 @@ import {
   updateCompanyUser,
   updateUser,
 } from "@/repositories/user.repository";
+import { sendUserWelcomeEmail } from "@/services/email.service";
 import { FriendlyError } from "@/utils";
 
 const normalizeUserRole = (role?: "ADMIN" | "USER" | "OPERATOR") => {
@@ -112,14 +113,42 @@ export async function userCreateUseCase(
   }
 
   if (existingRelation) {
-    return updateCompanyUser(existingRelation.id, {
+    const companyUser = await updateCompanyUser(existingRelation.id, {
       role: normalizeUserRole(input.role ?? existingRelation.role),
       status: input.status ?? "ACTIVE",
     });
+
+    if (email) {
+      try {
+        await sendUserWelcomeEmail({
+          email,
+          name,
+          temporaryPassword: password,
+        });
+      } catch (error) {
+        console.error("Failed to send user welcome email", error);
+      }
+    }
+
+    return companyUser;
   }
 
-  return createCompanyUser(companyId, user.id, {
+  const companyUser = await createCompanyUser(companyId, user.id, {
     role: normalizedRole,
     status: input.status ?? "ACTIVE",
   });
+
+  if (email) {
+    try {
+      await sendUserWelcomeEmail({
+        email,
+        name,
+        temporaryPassword: password,
+      });
+    } catch (error) {
+      console.error("Failed to send user welcome email", error);
+    }
+  }
+
+  return companyUser;
 }

@@ -80,97 +80,122 @@ import { get5255PEPInput } from "@/utils/inputs/get-5255-insumo-pep.input";
 import { get5264AlertaCPFSuspeitoInput } from "@/utils/inputs/get-5264-insumo_alerta-cpf-suspeito.input";
 import { get5239ClassificacaoRiscoDebitosAtivosInput } from "@/utils/inputs/get-5239-insumo-classificacao-risco-debitos-ativos.input";
 import { get5122RendaPresumidaSPCInput } from "@/utils/inputs/get-5122-renda-presumida-spc.input";
+import { createOrder, finishOrder } from "@/repositories/order.repository";
 
 export async function spc325UseCase(
   document: string,
   typeDocument: "CPF" | "CNPJ",
   insumos: string[],
+  audit: {
+    userId: string;
+    userName: string;
+    companyId: string;
+    companyName: string;
+    telefone?: string;
+    ip: string;
+    host: string;
+  },
 ) {
   console.log(insumos, "Insumos recebidos no use-case");
 
-  const allowedInsumos: Record<"CPF" | "CNPJ", string[]> = {
-    CPF: [
-      "5262",
-      "5180",
-      "5266",
-      "5195",
-      "5194",
-      "5241",
-      "5224",
-      "5227",
-      "5142",
-      "5232",
-      "5228",
-      "5259",
-      "3082",
-      "5268",
-      "5240",
-      "5226",
-      "5225",
-      "5249",
-      "5256",
-      "5257",
-      "5260",
-      "5261",
-      "18",
-      "78",
-      "5254",
-      "5097",
-      "5253",
-      "5255",
-      "5264",
-      "5239",
-      "77",
-      "5122",
-    ],
-    CNPJ: [
-      "5244",
-      "5178",
-      "5185",
-      "5241",
-      "5224",
-      "5227",
-      "5179",
-      "5184",
-      "5229",
-      "5245",
-      "5240",
-      "5226",
-      "5225",
-      "5249",
-      "5256",
-      "5257",
-      "5261",
-      "18",
-      "78",
-      "5247",
-      "5265",
-      "5267",
-      "5193",
-      "49",
-      "24",
-      "5186",
-      "5258",
-      "23",
-      "77",
-    ],
-  } as const;
-
-  const invalidInsumos = insumos.filter(
-    (insumo) => !allowedInsumos[typeDocument].includes(insumo),
-  );
-
-  console.log(invalidInsumos, "Insumos inválidos no use-case");
-
-  if (invalidInsumos.length > 0) {
-    throw new FriendlyError({
-      message: `Insumos inválidos: ${invalidInsumos.join(", ")}`,
-      context: "spc325UseCase.validation",
-      code: 400,
-    });
-  }
+  const order = await createOrder({
+    userId: audit.userId,
+    userName: audit.userName,
+    companyId: audit.companyId,
+    companyName: audit.companyName,
+    productName: "325-spc-maxi",
+    typeDocument,
+    document,
+    inputs: insumos,
+    ip: audit.ip,
+    host: audit.host,
+  });
+  
+  const startedAt = Date.now();
 
   try {
+    const allowedInsumos: Record<"CPF" | "CNPJ", string[]> = {
+      CPF: [
+        "5262",
+        "5180",
+        "5266",
+        "5195",
+        "5194",
+        "5241",
+        "5224",
+        "5227",
+        "5142",
+        "5232",
+        "5228",
+        "5259",
+        "3082",
+        "5268",
+        "5240",
+        "5226",
+        "5225",
+        "5249",
+        "5256",
+        "5257",
+        "5260",
+        "5261",
+        "18",
+        "78",
+        "5254",
+        "5097",
+        "5253",
+        "5255",
+        "5264",
+        "5239",
+        "77",
+        "5122",
+      ],
+      CNPJ: [
+        "5244",
+        "5178",
+        "5185",
+        "5241",
+        "5224",
+        "5227",
+        "5179",
+        "5184",
+        "5229",
+        "5245",
+        "5240",
+        "5226",
+        "5225",
+        "5249",
+        "5256",
+        "5257",
+        "5261",
+        "18",
+        "78",
+        "5247",
+        "5265",
+        "5267",
+        "5193",
+        "49",
+        "24",
+        "5186",
+        "5258",
+        "23",
+        "77",
+      ],
+    };
+
+    const invalidInsumos = insumos.filter(
+      (insumo) => !allowedInsumos[typeDocument].includes(insumo),
+    );
+
+    console.log(invalidInsumos, "Insumos inválidos no use-case");
+
+    if (invalidInsumos.length > 0) {
+      throw new FriendlyError({
+        message: `Insumos inválidos: ${invalidInsumos.join(", ")}`,
+        context: "spc325UseCase.validation",
+        code: 400,
+      });
+    }
+
     const { xml, json } = await HTTPSPCService({
       productCode: 325,
       tipoConsumidor: getTipoConsumidor(typeDocument),
@@ -1055,8 +1080,15 @@ export async function spc325UseCase(
             }),
           };
 
+    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS");
     return result;
   } catch (error) {
+    await finishOrder(order.id, Date.now() - startedAt, "FAILED");
+
+    if (error instanceof FriendlyError) {
+      throw error;
+    }
+
     throw new FriendlyError({
       message: AppError.GET_ALL_BRANDS_ERROR,
       originalError: error,

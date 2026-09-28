@@ -34,6 +34,7 @@ import { get5225MovimentacaoCadastroPositivoInput } from "@/utils/inputs/get-522
 import { get24ParticipacaoEmpresaInput } from "@/utils/inputs/get-24-participacao-empresa.input";
 import { get5258ParticipacaoEmpresaInput } from "@/utils/inputs/get-5258-participacao-empresa.input";
 import { get5186QuadroSocialMaisCompletoPjInput } from "@/utils/inputs/get-5186-quadro-social-mais-completo-pj.input";
+import { createOrder, finishOrder } from "@/repositories/order.repository";
 import { get5267QuantidadeFuncionarioInput } from "@/utils/inputs/get-5267-quantidade-funcionario.input";
 import { get5184RiscoCreditoPJInput } from "@/utils/inputs/get-5184-risco-credito-pj.input";
 import { get5229ScorePJInput } from "@/utils/inputs/get-5229-score-pj.input";
@@ -46,7 +47,15 @@ export async function spc668UseCase(
   document: string,
   typeDocument: "CPF" | "CNPJ",
   insumos: number[],
+  audit: { userId: string; userName: string; companyId: string; companyName: string; ip: string; host: string },
 ) {
+  const order = await createOrder({
+    userId: audit.userId, userName: audit.userName, companyId: audit.companyId,
+    companyName: audit.companyName, productName: "668-spc-avancada-pj",
+    typeDocument, document, inputs: insumos, ip: audit.ip, host: audit.host,
+  });
+  const startedAt = Date.now();
+
   const allowedInsumos = new Set([
     18, 49, 5244, 5178, 5241, 5224, 5226, 5227, 5193, 5263, 5257, 5260, 5240,
     5256, 5265, 5179, 5225, 24, 5258, 5186, 5267, 5184, 5229, 5247, 5245, 23,
@@ -73,6 +82,7 @@ export async function spc668UseCase(
       insumos,
     });
 
+    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS");
     return {
       protocolo: json["S:Envelope"]["S:Body"]["ns2:resultado"].protocolo?.$,
       operador: json["S:Envelope"]["S:Body"]["ns2:resultado"].operador?.$,
@@ -368,6 +378,7 @@ export async function spc668UseCase(
       ...(insumos.includes(5183) && {}),
     };
   } catch (error) {
+    await finishOrder(order.id, Date.now() - startedAt, "FAILED");
     throw new FriendlyError({
       message: AppError.GET_ALL_BRANDS_ERROR,
       originalError: error,

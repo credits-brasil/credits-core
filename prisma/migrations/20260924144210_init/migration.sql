@@ -13,6 +13,15 @@ CREATE TYPE "UserCompanyStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
 -- CreateEnum
 CREATE TYPE "AdminStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'DELETED');
 
+-- CreateEnum
+CREATE TYPE "TypeDocument" AS ENUM ('CPF', 'CNPJ');
+
+-- CreateEnum
+CREATE TYPE "TypeOrigin" AS ENUM ('API', 'WEB');
+
+-- CreateEnum
+CREATE TYPE "StatusOrder" AS ENUM ('PROCESS', 'SUCCESS', 'FAILED');
+
 -- CreateTable
 CREATE TABLE "admins" (
     "id" TEXT NOT NULL,
@@ -31,20 +40,18 @@ CREATE TABLE "admins" (
 -- CreateTable
 CREATE TABLE "orders" (
     "id" TEXT NOT NULL,
-    "uuid" TEXT NOT NULL,
-    "client_id" TEXT NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'PROCESS',
-    "code" INTEGER NOT NULL,
-    "type" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "user_name" TEXT NOT NULL,
+    "company_id" TEXT NOT NULL,
+    "company_name" TEXT NOT NULL,
+    "typeDocument" "TypeDocument" NOT NULL,
     "document" TEXT NOT NULL,
-    "report_id" TEXT NOT NULL,
-    "report_name" TEXT NOT NULL,
     "duration" INTEGER NOT NULL,
-    "source" TEXT NOT NULL,
-    "transaction_id" TEXT NOT NULL,
-    "origin" TEXT NOT NULL DEFAULT 'API',
+    "inputs" JSONB NOT NULL,
+    "origin" "TypeOrigin" NOT NULL,
     "ip" TEXT NOT NULL,
-    "external_id" TEXT,
+    "host" TEXT NOT NULL,
+    "status" "StatusOrder" NOT NULL DEFAULT 'PROCESS',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -81,6 +88,17 @@ CREATE TABLE "users" (
     "phone" TEXT NOT NULL,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "user_sessions" (
+    "id" TEXT NOT NULL,
+    "tokenHash" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "user_sessions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -126,9 +144,6 @@ CREATE INDEX "admins_name_idx" ON "admins"("name");
 CREATE INDEX "admins_status_idx" ON "admins"("status");
 
 -- CreateIndex
-CREATE INDEX "orders_id_client_id_document_code_ip_idx" ON "orders"("id", "client_id", "document", "code", "ip");
-
--- CreateIndex
 CREATE INDEX "companies_cnpj_idx" ON "companies"("cnpj");
 
 -- CreateIndex
@@ -154,6 +169,15 @@ CREATE INDEX "users_cpf_idx" ON "users"("cpf");
 
 -- CreateIndex
 CREATE INDEX "users_name_idx" ON "users"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "user_sessions_tokenHash_key" ON "user_sessions"("tokenHash");
+
+-- CreateIndex
+CREATE INDEX "user_sessions_userId_idx" ON "user_sessions"("userId");
+
+-- CreateIndex
+CREATE INDEX "user_sessions_expiresAt_idx" ON "user_sessions"("expiresAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "password_reset_codes_resetToken_key" ON "password_reset_codes"("resetToken");

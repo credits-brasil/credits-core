@@ -11,6 +11,7 @@ import { companyRoutes } from "./routes/company.routes";
 import { userRoutes } from "./routes/user.routes";
 import { spcRoutes } from "./routes/spc.routes";
 import { adminRoutes } from "./routes/admin.routes";
+import { orderRoutes } from "./routes/order.routes";
 
 const server: FastifyInstance = Fastify({
   logger: true,
@@ -29,6 +30,7 @@ server.register(companyRoutes);
 server.register(userRoutes);
 server.register(spcRoutes);
 server.register(adminRoutes);
+server.register(orderRoutes);
 
 const PORT = Number(process.env.PORT ?? 3000);
 

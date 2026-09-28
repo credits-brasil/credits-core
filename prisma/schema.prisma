@@ -25,26 +25,38 @@ model Admin {
 }
 
 model Order {
-  id             String   @id
-  uuid           String   @default(uuid())
-  client_id      String
-  status         String   @default("PROCESS")
-  code           Int
-  type           String
-  document       String
-  report_id      String
-  report_name    String
-  duration       Int
-  source         String
-  transaction_id String
-  origin         String   @default("API")
-  ip             String
-  external_id    String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id           String       @id @default(uuid())
+  user_id      String
+  user_name    String
+  company_id   String
+  company_name String
+  product_name String
+  typeDocument TypeDocument
+  document     String
+  duration     Int
+  inputs       Json
+  origin       TypeOrigin
+  ip           String
+  host         String
+  status       StatusOrder   @default(PROCESS)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-  @@index([id, client_id, document, code, ip])
   @@map("orders")
+}
+
+model SpcInput {
+  id           String       @id @default(uuid())
+  code         String
+  label        String
+  typeDocument TypeDocument
+  active       Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([code, typeDocument])
+  @@index([typeDocument, active])
+  @@map("spc_inputs")
 }
 
 model Company {
@@ -84,6 +96,24 @@ model User {
   @@index([cpf])
   @@index([name])
   @@map("users")
+}
+
+model Session {
+  id               String        @id @default(uuid())
+  kind             SessionKind
+  userId           String?
+  adminId          String?
+  accessTokenHash  String        @unique
+  refreshTokenHash String        @unique
+  accessExpiresAt  DateTime
+  refreshExpiresAt DateTime
+  createdAt        DateTime      @default(now())
+  revokedAt        DateTime?
+
+  @@index([userId])
+  @@index([adminId])
+  @@index([refreshExpiresAt])
+  @@map("sessions")
 }
 
 enum PasswordResetTarget {
@@ -150,4 +180,24 @@ enum AdminStatus {
   ACTIVE
   INACTIVE
   DELETED
+}
+
+enum TypeDocument {
+  CPF
+  CNPJ
+}
+
+enum TypeOrigin {
+  API
+  WEB
+}
+enum StatusOrder {
+  PROCESS
+  SUCCESS
+  FAILED
+}
+
+enum SessionKind {
+  USER
+  ADMIN
 }

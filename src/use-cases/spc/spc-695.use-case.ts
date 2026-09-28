@@ -53,6 +53,7 @@ import { get5267QuantidadeFuncionarioInput } from "@/utils/inputs/get-5267-quant
 import { get24ParticipacaoEmpresaInput } from "@/utils/inputs/get-24-participacao-empresa.input";
 import { get23SocioInput } from "@/utils/inputs/get-23-socio.input";
 import { get5186QuadroSocialMaisCompletoPjInput } from "@/utils/inputs/get-5186-quadro-social-mais-completo-pj.input";
+import { createOrder, finishOrder } from "@/repositories/order.repository";
 
 function convertSPCInput<Input, Args extends unknown[], Output>(
   converter: (input: Input, ...args: Args) => Output,
@@ -69,7 +70,15 @@ export async function spc695UseCase(
   document: string,
   typeDocument: "CPF" | "CNPJ",
   insumos: number[],
+  audit: { userId: string; userName: string; companyId: string; companyName: string; ip: string; host: string },
 ) {
+  const order = await createOrder({
+    userId: audit.userId, userName: audit.userName, companyId: audit.companyId,
+    companyName: audit.companyName, productName: "695-spc-mais",
+    typeDocument, document, inputs: insumos, ip: audit.ip, host: audit.host,
+  });
+  const startedAt = Date.now();
+
   const allowedInsumos: Record<"CPF" | "CNPJ", number[]> = {
     CPF: [
       5262, 5180, 5266, 5195, 5194, 5241, 5224, 5227, 5142, 5232, 5228, 5268,
@@ -504,8 +513,10 @@ export async function spc695UseCase(
             }),
           };
 
+    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS");
     return result;
   } catch (error) {
+    await finishOrder(order.id, Date.now() - startedAt, "FAILED");
     if (error instanceof FriendlyError) throw error;
 
     throw new FriendlyError({

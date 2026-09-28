@@ -1,9 +1,10 @@
-import { randomUUID, timingSafeEqual, scryptSync } from "node:crypto";
+import { timingSafeEqual, scryptSync } from "node:crypto";
 
 import { AppError } from "@/constants/auth";
 import { LoginAuthInput } from "@/interfaces/auth";
 import { findAdminByEmail } from "@/repositories/admin.repository";
 import { FriendlyError } from "@/utils";
+import { issueSession } from "@/services/session.service";
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
@@ -32,9 +33,11 @@ function toAuthAdmin(admin: { id: string; name: string; email: string; createdAt
   };
 }
 
-function createSession(admin: { id: string; name: string; email: string; createdAt: Date | string; updatedAt: Date | string }) {
+async function createSession(admin: { id: string; name: string; email: string; createdAt: Date | string; updatedAt: Date | string }) {
+  const tokens = await issueSession({ kind: "ADMIN", adminId: admin.id });
+
   return {
-    accessToken: `auth_${randomUUID()}`,
+    ...tokens,
     admin: toAuthAdmin(admin),
   };
 }
