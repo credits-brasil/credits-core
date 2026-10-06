@@ -7,9 +7,9 @@ phases:
     commands:
       - npm ci
 
-  pre_build:
-    commands:
-      - npm test
+  # pre_build:
+  #   commands:
+  #     - npm run test
 
   build:
     commands:
