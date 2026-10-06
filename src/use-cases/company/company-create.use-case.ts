@@ -14,7 +14,7 @@ export async function companyCreateUseCase(input: CreateCompanyInput) {
   const operator_SPC = input.operator_SPC?.trim();
   const operator_SPC_password = input.operator_SPC_password?.trim();
 
-  if (!cnpj || !name) {
+  if (!cnpj || !name || !operator_SPC || !operator_SPC_password) {
     throw new FriendlyError({
       message: AppError.INVALID_PAYLOAD,
       context: "company.create.validation",
