@@ -47,17 +47,23 @@ export async function spcRoutes(server: FastifyInstance) {
     Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
   }>("/api/257", spc257Controller);
 
-  server.get<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
-  }>("/api/323", spc323Controller);
+  server.post<{
+    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[]; companyId: string; telefone?: string };
+  }>("/api/323-spc-mix-mais", spc323Controller);
 
   server.post<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
+    Body: {
+      document: string;
+      typeDocument: "CPF" | "CNPJ";
+      insumos: string[];
+      companyId: string;
+      telefone?: string;
+    };
   }>("/api/325-spc-maxi", spc325Controller);
 
-  server.get<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
-  }>("/api/337", spc337Controller);
+  server.post<{
+    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[]; companyId: string; telefone?: string };
+  }>("/api/337-spc-relatorio", spc337Controller);
 
   server.get<{
     Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
@@ -80,8 +86,8 @@ export async function spcRoutes(server: FastifyInstance) {
   }>("/api/628", spc628Controller);
 
   server.post<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
-  }>("/api/629-spc-positivo", spc629Controller);
+    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[]; companyId: string; telefone?: string };
+  }>("/api/629-spc-positivo-intermediario-pj", spc629Controller);
 
   server.get<{
     Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
@@ -99,9 +105,9 @@ export async function spcRoutes(server: FastifyInstance) {
     Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
   }>("/api/633", spc633Controller);
 
-  server.get<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
-  }>("/api/668", spc668Controller);
+  server.post<{
+    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[]; companyId: string; telefone?: string };
+  }>("/api/668-spc-avancada-pj", spc668Controller);
 
   server.get<{
     Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
@@ -123,9 +129,9 @@ export async function spcRoutes(server: FastifyInstance) {
     Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
   }>("/api/678", spc678Controller);
 
-  server.get<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
-  }>("/api/695", spc695Controller);
+  server.post<{
+    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[]; companyId: string; telefone?: string };
+  }>("/api/695-spc-mais", spc695Controller);
 
   server.get<{
     Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };

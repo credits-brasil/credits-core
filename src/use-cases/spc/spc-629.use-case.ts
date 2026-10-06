@@ -41,6 +41,7 @@ import { get5247ScorePJMEIInput } from "@/utils/inputs/get-5247-score-pj-mei.inp
 import { get5225MovimentacaoCadastroPositivoInput } from "@/utils/inputs/get-5225-movimentacao-cadastro-positivo.input";
 import { get24ParticipacaoEmpresaInput } from "@/utils/inputs/get-24-participacao-empresa.input";
 import { get5258ParticipacaoEmpresaInput } from "@/utils/inputs/get-5258-participacao-empresa.input";
+import { createOrder, finishOrder } from "@/repositories/order.repository";
 import { get5186QuadroSocialMaisCompletoPjInput } from "@/utils/inputs/get-5186-quadro-social-mais-completo-pj.input";
 import { get5267QuantidadeFuncionarioInput } from "@/utils/inputs/get-5267-quantidade-funcionario.input";
 
@@ -48,7 +49,15 @@ export async function spc629UseCase(
   document: string,
   typeDocument: "CPF" | "CNPJ",
   insumos: number[],
+  audit: { userId: string; userName: string; companyId: string; companyName: string; ip: string; host: string },
 ) {
+  const order = await createOrder({
+    userId: audit.userId, userName: audit.userName, companyId: audit.companyId,
+    companyName: audit.companyName, productName: "629-spc-positivo-intermediario-pj",
+    typeDocument, document, inputs: insumos, ip: audit.ip, host: audit.host,
+  });
+  const startedAt = Date.now();
+
   const allowedInsumos = new Set([
     18, 5244, 5178, 5185, 5241, 5226, 5193, 5263, 5257, 5260, 5240, 5265, 5179,
     5225, 24, 5258, 5186, 5267, 5184, 5229, 5247, 5245, 77, 5183,
@@ -74,7 +83,11 @@ export async function spc629UseCase(
       insumos,
     });
 
+    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS");
     return {
+      protocolo: json["S:Envelope"]["S:Body"]["ns2:resultado"].protocolo?.$,
+      operador: json["S:Envelope"]["S:Body"]["ns2:resultado"].operador?.$,
+      
       // DEFAULT
 
       // 49
@@ -368,9 +381,10 @@ export async function spc629UseCase(
       }),
 
       // 5183
-      ...(insumos.includes(5244) && {}),
+      ...(insumos.includes(5183) && {}),
     };
   } catch (error) {
+    await finishOrder(order.id, Date.now() - startedAt, "FAILED");
     throw new FriendlyError({
       message: AppError.GET_ALL_BRANDS_ERROR,
       originalError: error,

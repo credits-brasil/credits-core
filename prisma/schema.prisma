@@ -1,48 +1,203 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model Order {
-  id             String   @id
-  uuid           String   @default(uuid())
-  client_id      String
-  status         String   @default("PROCESS")
-  code           Int
-  type           String //CPF ou CNPJ
-  document       String
-  report_id      String // 633
-  report_name    String // SPC + SCORE
-  duration       Int // Tempo de duracao da resposta do fonte "SPC"
-  source         String // SPC CACHE e FINQI  Fontes que vamos buscar as coisas
-  transaction_id String //<protocolo numero="15206658677" digito="6"/>
-  origin         String   @default("API")
-  ip             String // Verificar se é o IP do client
-  external_id    String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+model Admin {
+  id             String              @id @default(uuid())
+  name           String
+  cpf            String              @unique
+  email          String              @unique
+  password       String
+  firstAccess    Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  status         AdminStatus         @default(ACTIVE)
+  passwordResets PasswordResetCode[]
 
-  @@index([id, client_id, document, code, ip])
+  @@index([name])
+  @@index([status])
+  @@map("admins")
+}
+
+model Order {
+  id           String       @id @default(uuid())
+  user_id      String
+  user_name    String
+  company_id   String
+  company_name String
+  product_name String
+  typeDocument TypeDocument
+  document     String
+  duration     Int
+  inputs       Json
+  origin       TypeOrigin
+  ip           String
+  host         String
+  status       StatusOrder   @default(PROCESS)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
   @@map("orders")
 }
 
-model Client {
-  id           String   @id
-  name         String
-  ip           Json
-  mounth_limit Int      @default(1000)
-  day_limit    Int      @default(1000)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+model SpcInput {
+  id           String       @id @default(uuid())
+  code         String
+  label        String
+  typeDocument TypeDocument
+  active       Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-  @@map("clients")
+  @@unique([code, typeDocument])
+  @@index([typeDocument, active])
+  @@map("spc_inputs")
+}
+
+model Company {
+  id                     String        @id @default(uuid())
+  cnpj                   String
+  name                   String
+  operator_SPC           String?
+  operator_SPC_password  String?
+  limit_consults_daily   Int           @default(0)
+  limit_consults_monthly Int           @default(0)
+  status                 CompanyStatus @default(ACTIVE)
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  users                  CompanyUser[]
+
+  @@index([cnpj])
+  @@index([name])
+  @@index([status])
+  @@map("companies")
+}
+
+model User {
+  id             String              @id @default(uuid())
+  user           String?             @unique
+  cpf            String
+  name           String
+  password       String
+  firstAccess    Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  email          String?             @unique
+  phone          String              @unique
+  companies      CompanyUser[]
+  passwordResets PasswordResetCode[]
+
+  @@index([user])
+  @@index([cpf])
+  @@index([name])
+  @@map("users")
+}
+
+model Session {
+  id               String        @id @default(uuid())
+  kind             SessionKind
+  userId           String?
+  adminId          String?
+  accessTokenHash  String        @unique
+  refreshTokenHash String        @unique
+  accessExpiresAt  DateTime
+  refreshExpiresAt DateTime
+  createdAt        DateTime      @default(now())
+  revokedAt        DateTime?
+
+  @@index([userId])
+  @@index([adminId])
+  @@index([refreshExpiresAt])
+  @@map("sessions")
+}
+
+enum PasswordResetTarget {
+  ADMIN
+  USER
+}
+
+model PasswordResetCode {
+  id                  String              @id @default(uuid())
+  adminId             String?
+  admin               Admin?              @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  userId              String?
+  user                User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  target              PasswordResetTarget
+  code                String
+  resetToken          String?             @unique
+  codeExpiresAt       DateTime
+  resetTokenExpiresAt DateTime?
+  attempts            Int                 @default(0)
+  usedAt              DateTime?
+  createdAt           DateTime            @default(now())
+
+  @@index([adminId, codeExpiresAt])
+  @@index([userId, codeExpiresAt])
+  @@index([target, createdAt])
+  @@map("password_reset_codes")
+}
+
+model CompanyUser {
+  id        String            @id @default(uuid())
+  companyId String
+  userId    String            @map("operatorId")
+  role      UserRole          @default(USER)
+  status    UserCompanyStatus @default(ACTIVE)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  company   Company           @relation(fields: [companyId], references: [id])
+  user      User              @relation(fields: [userId], references: [id])
+
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+  @@map("company_users")
+}
+
+enum CompanyStatus {
+  ACTIVE
+  INACTIVE
+  DELETED
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum UserCompanyStatus {
+  ACTIVE
+  INACTIVE
+  DELETED
+}
+
+enum AdminStatus {
+  ACTIVE
+  INACTIVE
+  DELETED
+}
+
+enum TypeDocument {
+  CPF
+  CNPJ
+}
+
+enum TypeOrigin {
+  API
+  WEB
+}
+enum StatusOrder {
+  PROCESS
+  SUCCESS
+  FAILED
+}
+
+enum SessionKind {
+  USER
+  ADMIN
 }

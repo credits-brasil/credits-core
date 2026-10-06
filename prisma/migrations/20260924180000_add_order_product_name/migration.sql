@@ -1,0 +1,2 @@
+ALTER TABLE "orders"
+ADD COLUMN "product_name" TEXT NOT NULL DEFAULT '';

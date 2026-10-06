@@ -1,3 +1,26 @@
+type AgrupamentoPercentualNode =
+  | {
+      $?: {
+        agrupamento?: string;
+        percentual?: string;
+      };
+    }
+  | {
+      $?: {
+        agrupamento?: string;
+        percentual?: string;
+      };
+    }[];
+
+const mapGroupedItems = (grupos?: AgrupamentoPercentualNode) => {
+  const lista = Array.isArray(grupos) ? grupos : grupos ? [grupos] : [];
+
+  return lista.map((item) => ({
+    agrupamento: item.$?.agrupamento,
+    percentual: item.$?.percentual,
+  }));
+};
+
 export const get5257InsumoHistoricoOperacaoSCRInput =
   (insumoHistoricoOperacaoSCR: {
     resumo?: {
@@ -23,46 +46,21 @@ export const get5257InsumoHistoricoOperacaoSCRInput =
         "indice-risco-credito-score"?: string;
         "probabilidade-inadimplencia"?: string;
         mensagem?: string;
+        "valor-total-carteira-ativa-vencer-por-modalidade-inicial"?: string;
+        "valor-total-carteira-ativa-vencer-por-modalidade-final"?: string;
+        "valor-total-carteira-ativa-vencida-por-modalidade-inicial"?: string;
+        "valor-total-carteira-ativa-vencida-por-modalidade-final"?: string;
+        "valor-total-carteira-ativa-vencida-prejuizo-por-modalidade-inicial"?: string;
+        "valor-total-carteira-ativa-vencida-prejuizo-por-modalidade-final"?: string;
+        "quantidade-operacoes-vencidas"?: string;
+        "quantidade-operacoes-prejuizo"?: string;
       };
-      "grupo-garantia"?:
-        | {
-            $?: {
-              agrupamento?: string;
-              percentual?: string;
-            };
-          }
-        | {
-            $?: {
-              agrupamento?: string;
-              percentual?: string;
-            };
-          }[];
-      "grupo-modalidade"?:
-        | {
-            $?: {
-              agrupamento?: string;
-              percentual?: string;
-            };
-          }
-        | {
-            $?: {
-              agrupamento?: string;
-              percentual?: string;
-            };
-          }[];
-      "grupo-carteira-ativa"?:
-        | {
-            $?: {
-              agrupamento?: string;
-              percentual?: string;
-            };
-          }
-        | {
-            $?: {
-              agrupamento?: string;
-              percentual?: string;
-            };
-          }[];
+      "grupo-garantia"?: AgrupamentoPercentualNode;
+      "grupo-modalidade"?: AgrupamentoPercentualNode;
+      "grupo-carteira-ativa"?: AgrupamentoPercentualNode;
+      "grupo-carteira-ativa-vencer-por-modalidade"?: AgrupamentoPercentualNode;
+      "grupo-carteira-ativa-vencida-por-modalidade"?: AgrupamentoPercentualNode;
+      "grupo-carteira-ativa-vencida-prejuizo-por-modalidade"?: AgrupamentoPercentualNode;
     };
   }): {
     resumo: {
@@ -85,6 +83,14 @@ export const get5257InsumoHistoricoOperacaoSCRInput =
       "indice-risco-credito-score"?: string;
       "probabilidade-inadimplencia"?: string;
       mensagem?: string;
+      "valor-total-carteira-ativa-vencer-por-modalidade-inicial"?: string;
+      "valor-total-carteira-ativa-vencer-por-modalidade-final"?: string;
+      "valor-total-carteira-ativa-vencida-por-modalidade-inicial"?: string;
+      "valor-total-carteira-ativa-vencida-por-modalidade-final"?: string;
+      "valor-total-carteira-ativa-vencida-prejuizo-por-modalidade-inicial"?: string;
+      "valor-total-carteira-ativa-vencida-prejuizo-por-modalidade-final"?: string;
+      "quantidade-operacoes-vencidas"?: string;
+      "quantidade-operacoes-prejuizo"?: string;
       "grupo-garantia": {
         agrupamento?: string;
         percentual?: string;
@@ -94,6 +100,18 @@ export const get5257InsumoHistoricoOperacaoSCRInput =
         percentual?: string;
       }[];
       "grupo-carteira-ativa": {
+        agrupamento?: string;
+        percentual?: string;
+      }[];
+      "grupo-carteira-ativa-vencer-por-modalidade": {
+        agrupamento?: string;
+        percentual?: string;
+      }[];
+      "grupo-carteira-ativa-vencida-por-modalidade": {
+        agrupamento?: string;
+        percentual?: string;
+      }[];
+      "grupo-carteira-ativa-vencida-prejuizo-por-modalidade": {
         agrupamento?: string;
         percentual?: string;
       }[];
@@ -169,46 +187,76 @@ export const get5257InsumoHistoricoOperacaoSCRInput =
         insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]?.$
           ?.mensagem,
 
-      "grupo-garantia": (() => {
-        const grupos =
-          insumoHistoricoOperacaoSCR?.[
-            "detalhe-insumo-historico-operacao-scr"
-          ]?.["grupo-garantia"];
+      "valor-total-carteira-ativa-vencer-por-modalidade-inicial":
+        insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]
+          ?.$?.["valor-total-carteira-ativa-vencer-por-modalidade-inicial"],
 
-        const lista = Array.isArray(grupos) ? grupos : grupos ? [grupos] : [];
+      "valor-total-carteira-ativa-vencer-por-modalidade-final":
+        insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]
+          ?.$?.["valor-total-carteira-ativa-vencer-por-modalidade-final"],
 
-        return lista.map((i) => ({
-          agrupamento: i.$?.agrupamento,
-          percentual: i.$?.percentual,
-        }));
-      })(),
+      "valor-total-carteira-ativa-vencida-por-modalidade-inicial":
+        insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]
+          ?.$?.["valor-total-carteira-ativa-vencida-por-modalidade-inicial"],
 
-      "grupo-modalidade": (() => {
-        const grupos =
-          insumoHistoricoOperacaoSCR?.[
-            "detalhe-insumo-historico-operacao-scr"
-          ]?.["grupo-modalidade"];
+      "valor-total-carteira-ativa-vencida-por-modalidade-final":
+        insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]
+          ?.$?.["valor-total-carteira-ativa-vencida-por-modalidade-final"],
 
-        const lista = Array.isArray(grupos) ? grupos : grupos ? [grupos] : [];
+      "valor-total-carteira-ativa-vencida-prejuizo-por-modalidade-inicial":
+        insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]
+          ?.$?.[
+            "valor-total-carteira-ativa-vencida-prejuizo-por-modalidade-inicial"
+          ],
 
-        return lista.map((i) => ({
-          agrupamento: i.$?.agrupamento,
-          percentual: i.$?.percentual,
-        }));
-      })(),
+      "valor-total-carteira-ativa-vencida-prejuizo-por-modalidade-final":
+        insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]
+          ?.$?.[
+            "valor-total-carteira-ativa-vencida-prejuizo-por-modalidade-final"
+          ],
 
-      "grupo-carteira-ativa": (() => {
-        const grupos =
-          insumoHistoricoOperacaoSCR?.[
-            "detalhe-insumo-historico-operacao-scr"
-          ]?.["grupo-carteira-ativa"];
+      "quantidade-operacoes-vencidas":
+        insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]
+          ?.$?.["quantidade-operacoes-vencidas"],
 
-        const lista = Array.isArray(grupos) ? grupos : grupos ? [grupos] : [];
+      "quantidade-operacoes-prejuizo":
+        insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]
+          ?.$?.["quantidade-operacoes-prejuizo"],
 
-        return lista.map((i) => ({
-          agrupamento: i.$?.agrupamento,
-          percentual: i.$?.percentual,
-        }));
-      })(),
+      "grupo-garantia": mapGroupedItems(
+        insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]?.[
+          "grupo-garantia"
+        ],
+      ),
+
+      "grupo-modalidade": mapGroupedItems(
+        insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]?.[
+          "grupo-modalidade"
+        ],
+      ),
+
+      "grupo-carteira-ativa": mapGroupedItems(
+        insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]?.[
+          "grupo-carteira-ativa"
+        ],
+      ),
+
+      "grupo-carteira-ativa-vencer-por-modalidade": mapGroupedItems(
+        insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]?.[
+          "grupo-carteira-ativa-vencer-por-modalidade"
+        ],
+      ),
+
+      "grupo-carteira-ativa-vencida-por-modalidade": mapGroupedItems(
+        insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]?.[
+          "grupo-carteira-ativa-vencida-por-modalidade"
+        ],
+      ),
+
+      "grupo-carteira-ativa-vencida-prejuizo-por-modalidade": mapGroupedItems(
+        insumoHistoricoOperacaoSCR?.["detalhe-insumo-historico-operacao-scr"]?.[
+          "grupo-carteira-ativa-vencida-prejuizo-por-modalidade"
+        ],
+      ),
     },
   });

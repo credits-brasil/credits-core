@@ -5,21 +5,37 @@ import { SPCUseCases } from "@/use-cases/spc";
 import { FriendlyError } from "@/utils/friendly-error";
 
 import { AppError, AppMessages } from "@/constants/spc";
+import { requireUserCompany } from "@/utils/user-auth";
 
 export const spc325Controller = async (
   request: FastifyRequest<{
-    Body: { document: string; typeDocument: "CPF" | "CNPJ"; insumos: number[] };
+    Body: {
+      document: string;
+      typeDocument: "CPF" | "CNPJ";
+      insumos: string[];
+      companyId: string;
+      telefone?: string;
+    };
   }>,
   reply: FastifyReply,
 ) => {
-  const { document, typeDocument, insumos } = request.body;
+  const { document, typeDocument, insumos, companyId } = request.body;
 
-  console.log(request.body)
+  const authenticatedUser = await requireUserCompany(request, reply, companyId);
+  if (!authenticatedUser) return;
 
   const spcUseCases = new SPCUseCases();
 
   try {
-    const spc = await spcUseCases.spc325(document, typeDocument, insumos);
+    const spc = await spcUseCases.spc325(document, typeDocument, insumos, {
+      userId: authenticatedUser.id,
+      userName: authenticatedUser.name,
+      companyId: authenticatedUser.companyId,
+      companyName: authenticatedUser.companyName,
+      telefone: request.body.telefone,
+      ip: request.ip,
+      host: request.headers.host ?? "",
+    });
 
     return reply
       .code(200)
