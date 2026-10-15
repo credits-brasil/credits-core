@@ -47,6 +47,9 @@ export type PlatformLogEntry = {
 };
 
 let mongoClient: MongoClient | null = null;
+const platformLogQueue: PlatformLogEntry[] = [];
+let isPlatformLogQueueFlushing = false;
+let platformLogFlushTimer: NodeJS.Timeout | null = null;
 
 const getMongoUri = () => {
   return process.env.MONGODB_URI ?? process.env.SPC_MONGO_URI ?? "";
@@ -181,13 +184,68 @@ export const normalizePlatformLogEntry = (input: PlatformLogEntryInput) => {
   };
 };
 
-export const savePlatformLog = async (input: PlatformLogEntryInput) => {
-  const collection = await getMongoCollection();
+const enqueuePlatformLogDocument = (document: PlatformLogEntry) => {
+  platformLogQueue.push(document);
 
-  if (!collection) {
-    return null;
+  if (!platformLogFlushTimer) {
+    const flushIntervalMs = Math.max(1000, Number(process.env.PLATFORM_LOG_FLUSH_INTERVAL_MS ?? 2000));
+    platformLogFlushTimer = setInterval(() => {
+      void flushPlatformLogQueue();
+    }, flushIntervalMs);
+
+    if (typeof platformLogFlushTimer.unref === "function") {
+      platformLogFlushTimer.unref();
+    }
+  }
+};
+
+export const getPlatformLogQueueDepth = () => platformLogQueue.length;
+
+export const flushPlatformLogQueue = async () => {
+  if (isPlatformLogQueueFlushing || platformLogQueue.length === 0) {
+    return 0;
   }
 
+  isPlatformLogQueueFlushing = true;
+  let batch: PlatformLogEntry[] = [];
+
+  try {
+    const collection = await getMongoCollection();
+    const batchSize = Math.max(1, Number(process.env.PLATFORM_LOG_BATCH_SIZE ?? 25));
+    batch = platformLogQueue.splice(0, batchSize);
+
+    if (batch.length === 0) {
+      return 0;
+    }
+
+    if (!collection) {
+      platformLogQueue.unshift(...batch);
+      return 0;
+    }
+
+    await collection.insertMany(batch as any);
+    return batch.length;
+  } catch (error) {
+    const errorName = (error as any)?.name;
+
+    if (isMongoConnectionError(error) || errorName === "MongoTopologyClosedError" || errorName === "MongoNotConnectedError") {
+      console.warn("Platform audit queue paused until Mongo reconnects.");
+      platformLogQueue.unshift(...batch);
+      return 0;
+    }
+
+    throw error;
+  } finally {
+    isPlatformLogQueueFlushing = false;
+
+    if (platformLogQueue.length === 0 && platformLogFlushTimer) {
+      clearInterval(platformLogFlushTimer);
+      platformLogFlushTimer = null;
+    }
+  }
+};
+
+export const savePlatformLog = async (input: PlatformLogEntryInput) => {
   const normalized = normalizePlatformLogEntry(input);
   const now = new Date();
   const document = {
@@ -195,41 +253,10 @@ export const savePlatformLog = async (input: PlatformLogEntryInput) => {
     ...normalized,
     createdAt: now,
     updatedAt: now,
-  };
+  } as PlatformLogEntry;
 
-  try {
-    await collection.insertOne(document as any);
-    return document as PlatformLogEntry;
-  } catch (error) {
-    const errorName = (error as any)?.name;
-
-    if (!isMongoConnectionError(error) && errorName !== "MongoTopologyClosedError" && errorName !== "MongoNotConnectedError") {
-      throw error;
-    }
-
-    try {
-      const uri = getMongoUri();
-
-      if (!uri) {
-        return null;
-      }
-
-      const reconnectClient = await ensureMongoClient(uri);
-      const dbName = process.env.MONGODB_NAME ?? "credits";
-      const collectionName = process.env.MONGODB_LOGS_COLLECTION ?? "platform_logs";
-      const retryCollection = reconnectClient.db(dbName).collection(collectionName);
-
-      await retryCollection.insertOne(document as any);
-      return document as PlatformLogEntry;
-    } catch (retryError) {
-      if (isMongoConnectionError(retryError)) {
-        console.warn("Platform audit log skipped due to Mongo connectivity failure.");
-        return null;
-      }
-
-      throw retryError;
-    }
-  }
+  enqueuePlatformLogDocument(document);
+  return document;
 };
 
 export const paginatePlatformLogs = ({
