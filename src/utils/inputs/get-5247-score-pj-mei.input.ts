@@ -10,6 +10,7 @@ export const get5247ScorePJMEIInput = (scorePjMei: {
       classe?: string;
       horizonte?: string;
       "mesagem-interpretativa-score"?: string;
+      probabilidade?: string;
       score?: string;
       "tipo-cliente-score"?: string;
     };
@@ -23,6 +24,7 @@ export const get5247ScorePJMEIInput = (scorePjMei: {
     classe?: string;
     horizonte?: string;
     "mesagem-interpretativa-score"?: string;
+    probabilidade?: string;
     score?: string;
     "tipo-cliente-score"?: string;
   };
@@ -39,6 +41,7 @@ export const get5247ScorePJMEIInput = (scorePjMei: {
       horizonte: detalhe?.$?.horizonte,
       "mesagem-interpretativa-score":
         detalhe?.$?.["mesagem-interpretativa-score"],
+      probabilidade: detalhe?.$?.probabilidade,
       score: detalhe?.$?.score,
       "tipo-cliente-score": detalhe?.$?.["tipo-cliente-score"],
     },
