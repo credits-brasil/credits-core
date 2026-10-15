@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { normalizePlatformLogEntry, paginatePlatformLogs } from "./platform-log.repository";
+import {
+  isMongoClientReady,
+  normalizePlatformLogEntry,
+  paginatePlatformLogs,
+} from "./platform-log.repository";
 import { normalizeProtocolValue } from "./order.repository";
 
 test("normalizePlatformLogEntry keeps previous and new state plus actor metadata", () => {
@@ -41,6 +45,17 @@ test("paginatePlatformLogs calculates page metadata from total count", () => {
   assert.equal(page.totalPages, 7);
   assert.equal(page.hasNextPage, true);
   assert.equal(page.hasPreviousPage, true);
+});
+
+test("isMongoClientReady detects closed topology before reconnect", () => {
+  const closedClient = {
+    topology: {
+      isConnected: () => false,
+      isDestroyed: () => true,
+    },
+  } as any;
+
+  assert.equal(isMongoClientReady(closedClient), false);
 });
 
 test("normalizeProtocolValue converts SPC protocol object into plain string", () => {

@@ -13,29 +13,56 @@ export type Spc325OrderSnapshot = {
 let mongoClient: MongoClient | null = null;
 
 const getMongoUri = () => {
-  const mongoUri = process.env.MONGODB_URI
+  const mongoUri = process.env.MONGODB_URI;
 
   if (!mongoUri) {
     throw new Error(
-      "Mongo URI não configurada. Defina SPC_MONGO_URI ou MONGO_URI no ambiente.",
+      "Mongo URI não configurada. Defina MONGO_URI no ambiente.",
     );
   }
 
   return mongoUri;
 };
 
-const getMongoCollection = async () => {
-  const uri = getMongoUri();
+const isMongoClientReady = (client: MongoClient | null | undefined) => {
+  if (!client) {
+    return false;
+  }
 
-  if (!mongoClient) {
+  const topology = (client as any)?.topology;
+
+  if (!topology) {
+    return true;
+  }
+
+  if (typeof topology.isDestroyed === "function" && topology.isDestroyed()) {
+    return false;
+  }
+
+  if (typeof topology.isConnected === "function") {
+    return topology.isConnected();
+  }
+
+  return true;
+};
+
+const ensureMongoClient = async (uri: string) => {
+  if (!mongoClient || !isMongoClientReady(mongoClient)) {
     mongoClient = new MongoClient(uri);
     await mongoClient.connect();
   }
 
+  return mongoClient;
+};
+
+const getMongoCollection = async () => {
+  const uri = getMongoUri();
+  const client = await ensureMongoClient(uri);
+
   const dbName = process.env.MONGODB_NAME ?? "credits";
   const collectionName = process.env.MONGODB_COLLECTION ?? "spc_report_orders";
 
-  return mongoClient.db(dbName).collection(collectionName);
+  return client.db(dbName).collection(collectionName);
 };
 
 export const saveSpcOrderSnapshot = async (

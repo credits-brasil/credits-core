@@ -52,6 +52,37 @@ const getMongoUri = () => {
   return process.env.MONGODB_URI ?? process.env.SPC_MONGO_URI ?? "";
 };
 
+export const isMongoClientReady = (client: MongoClient | null | undefined) => {
+  if (!client) {
+    return false;
+  }
+
+  const topology = (client as any)?.topology;
+
+  if (!topology) {
+    return true;
+  }
+
+  if (typeof topology.isDestroyed === "function" && topology.isDestroyed()) {
+    return false;
+  }
+
+  if (typeof topology.isConnected === "function") {
+    return topology.isConnected();
+  }
+
+  return true;
+};
+
+const ensureMongoClient = async (uri: string) => {
+  if (!mongoClient || !isMongoClientReady(mongoClient)) {
+    mongoClient = new MongoClient(uri);
+    await mongoClient.connect();
+  }
+
+  return mongoClient;
+};
+
 const getMongoCollection = async () => {
   const uri = getMongoUri();
 
@@ -59,15 +90,12 @@ const getMongoCollection = async () => {
     return null;
   }
 
-  if (!mongoClient) {
-    mongoClient = new MongoClient(uri);
-    await mongoClient.connect();
-  }
+  const client = await ensureMongoClient(uri);
 
   const dbName = process.env.MONGODB_NAME ?? "credits";
   const collectionName = process.env.MONGODB_LOGS_COLLECTION ?? "platform_logs";
 
-  return mongoClient.db(dbName).collection(collectionName);
+  return client.db(dbName).collection(collectionName);
 };
 
 export const normalizePlatformSource = (value?: PlatformLogSource | string | null) => {
@@ -134,9 +162,31 @@ export const savePlatformLog = async (input: PlatformLogEntryInput) => {
     updatedAt: now,
   };
 
-  await collection.insertOne(document as any);
+  try {
+    await collection.insertOne(document as any);
+    return document as PlatformLogEntry;
+  } catch (error) {
+    const errorName = (error as any)?.name;
 
-  return document as PlatformLogEntry;
+    if (errorName !== "MongoTopologyClosedError" && errorName !== "MongoNotConnectedError") {
+      throw error;
+    }
+
+    const uri = getMongoUri();
+
+    if (!uri) {
+      return null;
+    }
+
+    const reconnectClient = await ensureMongoClient(uri);
+    const dbName = process.env.MONGODB_NAME ?? "credits";
+    const collectionName = process.env.MONGODB_LOGS_COLLECTION ?? "platform_logs";
+    const retryCollection = reconnectClient.db(dbName).collection(collectionName);
+
+    await retryCollection.insertOne(document as any);
+
+    return document as PlatformLogEntry;
+  }
 };
 
 export const paginatePlatformLogs = ({
