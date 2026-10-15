@@ -21,6 +21,36 @@ const normalizeUserRole = (role?: "ADMIN" | "USER" | "OPERATOR") => {
   return (role ?? "USER") as "ADMIN" | "USER";
 };
 
+export const getDuplicateUserErrorMessage = ({
+  email,
+  phone,
+  user,
+}: {
+  email?: string;
+  phone?: string;
+  user?: { email?: string | null; phone?: string | null } | null;
+}) => {
+  const normalizedEmail = email?.trim().toLowerCase() ?? "";
+  const normalizedPhone = phone?.trim() ?? "";
+
+  const emailMatches = Boolean(normalizedEmail) && Boolean(user?.email) && user!.email!.trim().toLowerCase() === normalizedEmail;
+  const phoneMatches = Boolean(normalizedPhone) && Boolean(user?.phone) && user!.phone!.trim() === normalizedPhone;
+
+  if (emailMatches && phoneMatches) {
+    return AppError.USER_EMAIL_AND_PHONE_ALREADY_EXISTS;
+  }
+
+  if (emailMatches) {
+    return AppError.USER_EMAIL_ALREADY_EXISTS;
+  }
+
+  if (phoneMatches) {
+    return AppError.USER_PHONE_ALREADY_EXISTS;
+  }
+
+  return AppError.USER_ALREADY_EXISTS;
+};
+
 export async function userCreateUseCase(
   companyId: string,
   input: { user?: string; name: string; cpf: string; email?: string; phone: string; role?: "ADMIN" | "USER" | "OPERATOR"; status?: "ACTIVE" | "INACTIVE" },
@@ -66,9 +96,11 @@ export async function userCreateUseCase(
     (email ? await findUserByEmail(email) : undefined) ??
     (await findUserByPhone(phone));
 
-  if (user && ((email && user.email === email) || user.phone === phone)) {
+  const duplicateUserMessage = getDuplicateUserErrorMessage({ email, phone, user });
+
+  if (user && duplicateUserMessage !== AppError.USER_ALREADY_EXISTS) {
     throw new FriendlyError({
-      message: AppError.USER_ALREADY_EXISTS,
+      message: duplicateUserMessage,
       context: "user.create.duplicateIdentity",
       code: 409,
     });

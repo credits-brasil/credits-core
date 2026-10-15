@@ -31,6 +31,7 @@ const getMongoClientOptions = (uri: string) => {
   return {
     ...(useTls ? { tls: true } : {}),
     ...(allowInvalidCertificates ? { tlsAllowInvalidCertificates: true } : {}),
+    authSource: process.env.MONGODB_AUTH_SOURCE ?? "admin",
     retryWrites: true,
     serverSelectionTimeoutMS: 20000,
     maxPoolSize: 5,

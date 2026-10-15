@@ -4,6 +4,9 @@ export enum AppError {
   COMPANY_NOT_FOUND = "Empresa não encontrada.",
   USER_NOT_FOUND = "Usuário não encontrado.",
   USER_ALREADY_EXISTS = "Já existe um usuário cadastrado com este CPF para esta empresa.",
+  USER_EMAIL_ALREADY_EXISTS = "Já existe um usuário cadastrado com este e-mail.",
+  USER_PHONE_ALREADY_EXISTS = "Já existe um usuário cadastrado com este celular.",
+  USER_EMAIL_AND_PHONE_ALREADY_EXISTS = "Já existe um usuário cadastrado com este e-mail e celular.",
 }
 
 export enum AppMessages {
