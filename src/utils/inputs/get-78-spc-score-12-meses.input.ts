@@ -3,7 +3,9 @@ type SPCScore12MesesItem = {
     classe?: string;
     horizonte?: string;
     "mesagem-interpretativa-score"?: string;
+    probabilidade?: string;
     score?: string;
+    "tipo-cliente-score"?: string;
   };
 };
 
@@ -16,7 +18,9 @@ export const get78SPCScore12MesesInput = (
     classe?: string;
     horizonte?: string;
     "mesagem-interpretativa-score"?: string;
+    probabilidade?: string;
     score?: string;
+    "tipo-cliente-score"?: string;
   }[];
 } => {
   const detalhes = spcScore12Meses?.["detalhe-spc-score-12-meses"];
@@ -33,7 +37,9 @@ export const get78SPCScore12MesesInput = (
       horizonte: item.$?.horizonte,
       "mesagem-interpretativa-score":
         item.$?.["mesagem-interpretativa-score"],
+      probabilidade: item.$?.probabilidade,
       score: item.$?.score,
+      "tipo-cliente-score": item.$?.["tipo-cliente-score"],
     })),
   };
 };

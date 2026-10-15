@@ -60,6 +60,21 @@ test('first access users are blocked before the session is created', async (t) =
   assert.match(response.json().message, /Primeiro acesso/i);
 });
 
+test('users who have not accepted the terms are still able to log in and must accept the terms before using the platform', async (t) => {
+  const server = await app(t);
+  mockMethod(t, prisma.user, 'findFirst', async () => ({ ...record, firstAccess: false, acceptedTerms: false }));
+  mockMethod(t, prisma.companyUser, 'findMany', async ({ where }) => {
+    assert.equal(where.userId, record.id);
+    assert.equal(where.status.not, 'INACTIVE');
+    return [{ role: 'USER', status: 'ACTIVE', company: { id: 'company-1', name: 'Company', cnpj: '00000000000000' } }];
+  });
+
+  const response = await server.inject({ method: 'POST', url: '/api/auth/user/login', payload: { email: record.email, password } });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().session.user.acceptedTerms, false);
+});
+
 test('wrong passwords, unknown emails and malformed hashes return 401', async (t) => {
   const server = await app(t);
   let stored = record;

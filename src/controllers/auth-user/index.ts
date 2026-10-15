@@ -1,3 +1,4 @@
+export { authUserAcceptTermsController } from "./auth-user-accept-terms.controller";
 export { authUserFirstAccessPasswordController } from "./auth-user-first-access-password.controller";
 export { authUserForgotPasswordController } from "./auth-user-forgot-password.controller";
 export { authUserLoginController } from "./auth-user-login.controller";

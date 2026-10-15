@@ -20,6 +20,7 @@ const safeSelect = {
       phone: true,
       password: true,
       firstAccess: true,
+      acceptedTerms: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -75,6 +76,7 @@ export const listUsersWithCompanies = () => {
       email: true,
       phone: true,
       firstAccess: true,
+      acceptedTerms: true,
       createdAt: true,
       updatedAt: true,
       companies: {
@@ -118,7 +120,7 @@ export const softDeleteCompanyUser = (id: string) => {
   });
 };
 
-export const createUser = (data: { user?: string | null; name: string; cpf: string; email?: string | null; phone: string; password: string }) => {
+export const createUser = (data: { user?: string | null; name: string; cpf: string; email?: string | null; phone: string; password: string; acceptedTerms?: boolean }) => {
 
   return prisma.user.create({
     data: {
@@ -127,6 +129,7 @@ export const createUser = (data: { user?: string | null; name: string; cpf: stri
       email: data.email?.trim().toLowerCase() || null,
       phone: data.phone.trim(),
       password: hashPassword(data.password),
+      acceptedTerms: data.acceptedTerms ?? false,
     },
     select: {
       id: true,
@@ -137,6 +140,7 @@ export const createUser = (data: { user?: string | null; name: string; cpf: stri
       phone: true,
       password: true,
       firstAccess: true,
+      acceptedTerms: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -155,6 +159,7 @@ export const findUserById = (id: string) => {
       phone: true,
       password: true,
       firstAccess: true,
+      acceptedTerms: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -173,6 +178,7 @@ export const findUserByCpf = (cpf: string) => {
       phone: true,
       password: true,
       firstAccess: true,
+      acceptedTerms: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -191,6 +197,7 @@ export const findUserByEmail = (email: string) => {
       phone: true,
       password: true,
       firstAccess: true,
+      acceptedTerms: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -209,13 +216,14 @@ export const findUserByPhone = (phone: string) => {
       phone: true,
       password: true,
       firstAccess: true,
+      acceptedTerms: true,
       createdAt: true,
       updatedAt: true,
     },
   });
 };
 
-export const updateUser = (id: string, data: { user?: string; name?: string; cpf?: string; email?: string; phone?: string; password?: string }) => {
+export const updateUser = (id: string, data: { user?: string; name?: string; cpf?: string; email?: string; phone?: string; password?: string; acceptedTerms?: boolean }) => {
   return prisma.user.update({
     where: { id },
     data: {
@@ -224,6 +232,7 @@ export const updateUser = (id: string, data: { user?: string; name?: string; cpf
       ...(data.email ? { email: data.email.trim().toLowerCase() } : {}),
       ...(data.phone ? { phone: data.phone.trim() } : {}),
       ...(data.password ? { password: hashPassword(data.password) } : {}),
+      ...(data.acceptedTerms !== undefined ? { acceptedTerms: data.acceptedTerms } : {}),
     },
     select: {
       id: true,
@@ -234,6 +243,7 @@ export const updateUser = (id: string, data: { user?: string; name?: string; cpf
       phone: true,
       password: true,
       firstAccess: true,
+      acceptedTerms: true,
       createdAt: true,
       updatedAt: true,
     },

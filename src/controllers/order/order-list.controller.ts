@@ -1,6 +1,8 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 
 import { listOrders } from "@/repositories/order.repository";
+import { listSpcInputDetailsByCodes } from "@/repositories/spc-input.repository";
+import { findSpcOrderSnapshotsByOrderIds } from "@/repositories/spc-order-persistence.repository";
 import { requireAdmin } from "@/utils/admin-auth";
 
 export const orderListController = async (
@@ -25,9 +27,40 @@ export const orderListController = async (
     status: request.query.status,
   });
 
+  const snapshots = await findSpcOrderSnapshotsByOrderIds(
+    orders.map((order) => order.id),
+  );
+
+  const snapshotsByOrderId = new Map(
+    snapshots.map((snapshot) => [snapshot._id, snapshot]),
+  );
+
+  const ordersWithSnapshots = await Promise.all(
+    orders.map(async (order) => {
+      const snapshot = snapshotsByOrderId.get(order.id);
+      const inputCodes = Array.isArray(order.inputs)
+        ? order.inputs.filter((value): value is string => typeof value === "string")
+        : [];
+
+      const inputDetails = await listSpcInputDetailsByCodes(
+        order.typeDocument,
+        inputCodes,
+      );
+
+      return {
+        ...order,
+        xml: snapshot?.xml ?? null,
+        result: snapshot?.result ?? null,
+        json: snapshot?.json ?? null,
+        inputCodes,
+        inputDetails,
+      };
+    }),
+  );
+
   return reply.send({
     statusCode: 200,
-    orders,
+    orders: ordersWithSnapshots,
     pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
   });
 };
