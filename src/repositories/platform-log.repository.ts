@@ -81,11 +81,13 @@ const getMongoClientOptions = (uri: string) => {
   const allowInvalidCertificates = process.env.MONGODB_TLS_ALLOW_INVALID_CERTS === "true";
 
   return {
-    ...(useTls ? { tls: true } : {}),
+    ...(useTls && !/\b(?:tls=false|ssl=false)\b/i.test(uri) ? { tls: true } : {}),
     ...(allowInvalidCertificates ? { tlsAllowInvalidCertificates: true } : {}),
     authSource: process.env.MONGODB_AUTH_SOURCE ?? "admin",
     retryWrites: true,
-    serverSelectionTimeoutMS: 20000,
+    connectTimeoutMS: 30000,
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 30000,
     maxPoolSize: 5,
   };
 };
