@@ -47,6 +47,7 @@ export interface AuthUser {
   id: string;
   name: string;
   cpf: string;
+  acceptedTerms?: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -6,7 +6,6 @@ export interface CompanyUserCreateBody {
   cpf: string;
   email?: string;
   phone: string;
-  password: string;
   role?: CompanyUserRole;
   status?: "ACTIVE" | "INACTIVE";
 }

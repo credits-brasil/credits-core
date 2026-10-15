@@ -15,4 +15,5 @@ export enum AppMessages {
   PASSWORD_RESET_TOKEN_SUCCESS = "Token de redefinição gerado com sucesso.",
   PASSWORD_RESET_SUCCESS = "Senha redefinida com sucesso.",
   FIRST_ACCESS_PASSWORD_SUCCESS = "Senha inicial atualizada com sucesso.",
+  TERMS_ACCEPTED_SUCCESS = "Termos de uso aceitos com sucesso.",
 }

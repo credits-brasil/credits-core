@@ -54,6 +54,7 @@ import { get24ParticipacaoEmpresaInput } from "@/utils/inputs/get-24-participaca
 import { get23SocioInput } from "@/utils/inputs/get-23-socio.input";
 import { get5186QuadroSocialMaisCompletoPjInput } from "@/utils/inputs/get-5186-quadro-social-mais-completo-pj.input";
 import { createOrder, finishOrder } from "@/repositories/order.repository";
+import { saveSpcOrderSnapshot } from "@/repositories/spc-order-persistence.repository";
 
 function convertSPCInput<Input, Args extends unknown[], Output>(
   converter: (input: Input, ...args: Args) => Output,
@@ -103,7 +104,7 @@ export async function spc695UseCase(
   }
 
   try {
-    const { json } = await HTTPSPCService({
+    const { xml, json } = await HTTPSPCService({
       productCode: 695,
       tipoConsumidor: getTipoConsumidor(typeDocument),
       document,
@@ -127,6 +128,7 @@ export async function spc695UseCase(
     const result =
       typeDocument === "CPF"
         ? {
+            protocolo: resultado.protocolo?.$,
             "alerta-documento": convertSPCInput(
               get19AlertaDocumentoInput,
               resultado["alerta-documento"],
@@ -317,6 +319,7 @@ export async function spc695UseCase(
             }),
           }
         : {
+            protocolo: resultado.protocolo?.$,
             "alerta-documento": convertSPCInput(
               get19AlertaDocumentoInput,
               resultado["alerta-documento"],
@@ -513,7 +516,19 @@ export async function spc695UseCase(
             }),
           };
 
-    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS");
+    const protocol = result.protocolo ?? null;
+
+    await saveSpcOrderSnapshot({
+      orderId: order.id,
+      document,
+      typeDocument,
+      insumos: insumos.map(String),
+      xml,
+      json,
+      result,
+    });
+
+    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS", protocol);
     return result;
   } catch (error) {
     await finishOrder(order.id, Date.now() - startedAt, "FAILED");

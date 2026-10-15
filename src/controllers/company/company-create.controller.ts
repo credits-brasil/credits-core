@@ -3,6 +3,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { AppError, AppMessages } from "@/constants/company";
 import { CompanyCreateBody } from "@/models/company.model";
 import { FriendlyError } from "@/utils";
+import { logPlatformAction } from "@/utils/platform-log";
 import { companyCreateUseCase } from "@/use-cases/company";
 
 export const companyCreateController = async (
@@ -13,6 +14,18 @@ export const companyCreateController = async (
 ) => {
   try {
     const company = await companyCreateUseCase(request.body);
+
+    await logPlatformAction(request, {
+      action: "COMPANY_CREATE",
+      entity: "COMPANY",
+      previousState: null,
+      newState: company,
+      companyId: company.id,
+      companyName: company.name,
+      metadata: {
+        companyCnpj: company.cnpj,
+      },
+    });
 
     return reply.code(201).send({
       statusCode: 201,

@@ -31,6 +31,7 @@ model Order {
   company_id   String
   company_name String
   product_name String
+  protocol     String?
   typeDocument TypeDocument
   document     String
   duration     Int
@@ -42,6 +43,7 @@ model Order {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
+  @@index([protocol])
   @@map("orders")
 }
 
@@ -85,6 +87,7 @@ model User {
   name           String
   password       String
   firstAccess    Boolean             @default(true)
+  acceptedTerms  Boolean             @default(false)
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
   email          String?             @unique

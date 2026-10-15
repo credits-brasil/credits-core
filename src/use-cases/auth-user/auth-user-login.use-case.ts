@@ -23,6 +23,7 @@ function toAuthUser(user: {
   cpf: string;
   email?: string | null;
   phone?: string | null;
+  acceptedTerms?: boolean | null;
   createdAt: Date | string;
   updatedAt: Date | string;
 }) {
@@ -32,6 +33,7 @@ function toAuthUser(user: {
     cpf: user.cpf,
     email: user.email ?? "",
     phone: user.phone ?? "",
+    acceptedTerms: !!user.acceptedTerms,
     createdAt: new Date(user.createdAt).toISOString(),
     updatedAt: new Date(user.updatedAt).toISOString(),
   };
@@ -43,6 +45,7 @@ async function createSession(user: {
   cpf: string;
   email?: string | null;
   phone?: string | null;
+  acceptedTerms?: boolean | null;
   createdAt: Date | string;
   updatedAt: Date | string;
 }) {

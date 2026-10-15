@@ -35,3 +35,7 @@ export interface AuthFirstAccessPasswordBody {
   currentPassword: string;
   newPassword: string;
 }
+
+export interface AuthAcceptTermsBody {
+  email: string;
+}

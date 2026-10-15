@@ -23,7 +23,7 @@ const normalizeUserRole = (role?: "ADMIN" | "USER" | "OPERATOR") => {
 
 export async function userCreateUseCase(
   companyId: string,
-  input: { user?: string; name: string; cpf: string; email?: string; phone: string; password?: string; role?: "ADMIN" | "USER" | "OPERATOR"; status?: "ACTIVE" | "INACTIVE" },
+  input: { user?: string; name: string; cpf: string; email?: string; phone: string; role?: "ADMIN" | "USER" | "OPERATOR"; status?: "ACTIVE" | "INACTIVE" },
 ) {
   const company = await findCompanyById(companyId);
   const normalizedRole = normalizeUserRole(input.role);
@@ -42,7 +42,9 @@ export async function userCreateUseCase(
   const userCode = input.user?.trim() || "";
   const email = input.email?.trim().toLowerCase() || "";
   const phone = input.phone.trim();
-  const password = input.password || normalizedCpf;
+  const password = String(
+    Math.floor(10000000 + Math.random() * 90000000),
+  );
 
   if (!name || !cpf || !phone || (Boolean(userCode) === Boolean(email))) {
     throw new FriendlyError({
