@@ -52,6 +52,19 @@ const getMongoUri = () => {
   return process.env.MONGODB_URI ?? process.env.SPC_MONGO_URI ?? "";
 };
 
+const getMongoClientOptions = (uri: string) => {
+  const useTls = /mongodb\+srv:|tls=true|ssl=true|mongodb\.net/i.test(uri) || process.env.MONGODB_TLS === "true";
+  const allowInvalidCertificates = process.env.MONGODB_TLS_ALLOW_INVALID_CERTS === "true";
+
+  return {
+    ...(useTls ? { tls: true } : {}),
+    ...(allowInvalidCertificates ? { tlsAllowInvalidCertificates: true } : {}),
+    retryWrites: true,
+    serverSelectionTimeoutMS: 20000,
+    maxPoolSize: 5,
+  };
+};
+
 export const isMongoClientReady = (client: MongoClient | null | undefined) => {
   if (!client) {
     return false;
@@ -76,7 +89,7 @@ export const isMongoClientReady = (client: MongoClient | null | undefined) => {
 
 const ensureMongoClient = async (uri: string) => {
   if (!mongoClient || !isMongoClientReady(mongoClient)) {
-    mongoClient = new MongoClient(uri);
+    mongoClient = new MongoClient(uri, getMongoClientOptions(uri));
     await mongoClient.connect();
   }
 
