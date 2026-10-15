@@ -51,6 +51,27 @@ const platformLogQueue: PlatformLogEntry[] = [];
 let isPlatformLogQueueFlushing = false;
 let platformLogFlushTimer: NodeJS.Timeout | null = null;
 
+const maskMongoUri = (uri: string | null | undefined) => {
+  if (!uri) {
+    return "none";
+  }
+
+  return uri.replace(/(:\/\/)([^:@/]+)(:[^@/]*)(@)/, "$1***$3$4");
+};
+
+export const describeMongoFailure = (error: unknown, context: string) => {
+  const mongoError = error as any;
+  const name = String(mongoError?.name ?? "UnknownError");
+  const code = String(mongoError?.code ?? "N/A");
+  const message = String(mongoError?.message ?? error ?? "Unknown Mongo error");
+  const uri = getMongoUri();
+  const dbName = process.env.MONGODB_NAME ?? "credits";
+  const collectionName = process.env.MONGODB_LOGS_COLLECTION ?? "platform_logs";
+  const tlsEnabled = /mongodb\+srv:|tls=true|ssl=true|mongodb\.net/i.test(String(uri ?? "")) || process.env.MONGODB_TLS === "true";
+
+  return `${context}. uri=${maskMongoUri(uri)}; db=${dbName}; collection=${collectionName}; tls=${tlsEnabled}; name=${name}; code=${code}; message=${message}`;
+};
+
 const getMongoUri = () => {
   return process.env.MONGODB_URI ?? process.env.SPC_MONGO_URI ?? "";
 };
@@ -128,10 +149,11 @@ const getMongoCollection = async () => {
     return client.db(dbName).collection(collectionName);
   } catch (error) {
     if (isMongoConnectionError(error)) {
-      console.warn("Mongo audit collection unavailable; skipping platform log save.");
+      console.warn(describeMongoFailure(error, "Mongo audit collection unavailable; skipping platform log save."));
       return null;
     }
 
+    console.error(describeMongoFailure(error, "Mongo audit collection failed with a non-network error."));
     throw error;
   }
 };
@@ -229,11 +251,12 @@ export const flushPlatformLogQueue = async () => {
     const errorName = (error as any)?.name;
 
     if (isMongoConnectionError(error) || errorName === "MongoTopologyClosedError" || errorName === "MongoNotConnectedError") {
-      console.warn("Platform audit queue paused until Mongo reconnects.");
+      console.warn(describeMongoFailure(error, "Platform audit queue paused until Mongo reconnects."));
       platformLogQueue.unshift(...batch);
       return 0;
     }
 
+    console.error(describeMongoFailure(error, "Platform audit queue insert failed with a non-network error."));
     throw error;
   } finally {
     isPlatformLogQueueFlushing = false;
