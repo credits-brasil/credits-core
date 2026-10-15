@@ -68,14 +68,36 @@ const ensureMongoClient = async (uri: string) => {
   return mongoClient;
 };
 
+const isMongoConnectionError = (error: unknown) => {
+  const name = String((error as any)?.name ?? "");
+  const code = String((error as any)?.code ?? "");
+
+  return [
+    "MongoServerSelectionError",
+    "MongoTopologyClosedError",
+    "MongoNotConnectedError",
+    "MongoNetworkError",
+  ].includes(name) || /SSL|ECONNRESET|ENOTFOUND|EAI_AGAIN|TIMEOUT|selection/i.test(code + " " + String(error));
+};
+
 const getMongoCollection = async () => {
   const uri = getMongoUri();
-  const client = await ensureMongoClient(uri);
 
-  const dbName = process.env.MONGODB_NAME ?? "credits";
-  const collectionName = process.env.MONGODB_COLLECTION ?? "spc_report_orders";
+  try {
+    const client = await ensureMongoClient(uri);
 
-  return client.db(dbName).collection(collectionName);
+    const dbName = process.env.MONGODB_NAME ?? "credits";
+    const collectionName = process.env.MONGODB_COLLECTION ?? "spc_report_orders";
+
+    return client.db(dbName).collection(collectionName);
+  } catch (error) {
+    if (isMongoConnectionError(error)) {
+      console.warn("Mongo SPC persistence unavailable; continuing without snapshot storage.");
+      return null;
+    }
+
+    throw error;
+  }
 };
 
 export const saveSpcOrderSnapshot = async (
@@ -84,26 +106,48 @@ export const saveSpcOrderSnapshot = async (
   const collection = await getMongoCollection();
   const now = new Date();
 
+  if (!collection) {
+    return {
+      id: payload.orderId,
+      savedAt: now,
+      skipped: true,
+    };
+  }
+
   const { orderId, ...snapshotData } = payload;
 
-  await collection.updateOne(
-    { _id: orderId as any },
-    {
-      $set: {
-        ...snapshotData,
-        updatedAt: now,
+  try {
+    await collection.updateOne(
+      { _id: orderId as any },
+      {
+        $set: {
+          ...snapshotData,
+          updatedAt: now,
+        },
+        $setOnInsert: {
+          createdAt: now,
+        },
       },
-      $setOnInsert: {
-        createdAt: now,
-      },
-    },
-    { upsert: true },
-  );
+      { upsert: true },
+    );
 
-  return {
-    id: orderId,
-    savedAt: now,
-  };
+    return {
+      id: orderId,
+      savedAt: now,
+      skipped: false,
+    };
+  } catch (error) {
+    if (isMongoConnectionError(error)) {
+      console.warn("SPC snapshot storage skipped because Mongo is unavailable.");
+      return {
+        id: orderId,
+        savedAt: now,
+        skipped: true,
+      };
+    }
+
+    throw error;
+  }
 };
 
 export const findSpcOrderSnapshotsByOrderIds = async (orderIds: string[]) => {
@@ -113,14 +157,27 @@ export const findSpcOrderSnapshotsByOrderIds = async (orderIds: string[]) => {
 
   const collection = await getMongoCollection();
 
-  const snapshots = await collection
-    .find({ _id: { $in: orderIds as any[] } } as any)
-    .toArray();
+  if (!collection) {
+    return [];
+  }
 
-  return snapshots as unknown as Array<{
-    _id: string;
-    xml?: string;
-    json?: unknown;
-    result?: unknown;
-  }>;
+  try {
+    const snapshots = await collection
+      .find({ _id: { $in: orderIds as any[] } } as any)
+      .toArray();
+
+    return snapshots as unknown as Array<{
+      _id: string;
+      xml?: string;
+      json?: unknown;
+      result?: unknown;
+    }>;
+  } catch (error) {
+    if (isMongoConnectionError(error)) {
+      console.warn("SPC snapshot lookup skipped because Mongo is unavailable.");
+      return [];
+    }
+
+    throw error;
+  }
 };

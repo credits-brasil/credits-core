@@ -87,6 +87,18 @@ export const isMongoClientReady = (client: MongoClient | null | undefined) => {
   return true;
 };
 
+const isMongoConnectionError = (error: unknown) => {
+  const name = String((error as any)?.name ?? "");
+  const code = String((error as any)?.code ?? "");
+
+  return [
+    "MongoServerSelectionError",
+    "MongoTopologyClosedError",
+    "MongoNotConnectedError",
+    "MongoNetworkError",
+  ].includes(name) || /SSL|ECONNRESET|ENOTFOUND|EAI_AGAIN|TIMEOUT|selection/i.test(code + " " + String(error));
+};
+
 const ensureMongoClient = async (uri: string) => {
   if (!mongoClient || !isMongoClientReady(mongoClient)) {
     mongoClient = new MongoClient(uri, getMongoClientOptions(uri));
@@ -103,12 +115,21 @@ const getMongoCollection = async () => {
     return null;
   }
 
-  const client = await ensureMongoClient(uri);
+  try {
+    const client = await ensureMongoClient(uri);
 
-  const dbName = process.env.MONGODB_NAME ?? "credits";
-  const collectionName = process.env.MONGODB_LOGS_COLLECTION ?? "platform_logs";
+    const dbName = process.env.MONGODB_NAME ?? "credits";
+    const collectionName = process.env.MONGODB_LOGS_COLLECTION ?? "platform_logs";
 
-  return client.db(dbName).collection(collectionName);
+    return client.db(dbName).collection(collectionName);
+  } catch (error) {
+    if (isMongoConnectionError(error)) {
+      console.warn("Mongo audit collection unavailable; skipping platform log save.");
+      return null;
+    }
+
+    throw error;
+  }
 };
 
 export const normalizePlatformSource = (value?: PlatformLogSource | string | null) => {
@@ -181,24 +202,32 @@ export const savePlatformLog = async (input: PlatformLogEntryInput) => {
   } catch (error) {
     const errorName = (error as any)?.name;
 
-    if (errorName !== "MongoTopologyClosedError" && errorName !== "MongoNotConnectedError") {
+    if (!isMongoConnectionError(error) && errorName !== "MongoTopologyClosedError" && errorName !== "MongoNotConnectedError") {
       throw error;
     }
 
-    const uri = getMongoUri();
+    try {
+      const uri = getMongoUri();
 
-    if (!uri) {
-      return null;
+      if (!uri) {
+        return null;
+      }
+
+      const reconnectClient = await ensureMongoClient(uri);
+      const dbName = process.env.MONGODB_NAME ?? "credits";
+      const collectionName = process.env.MONGODB_LOGS_COLLECTION ?? "platform_logs";
+      const retryCollection = reconnectClient.db(dbName).collection(collectionName);
+
+      await retryCollection.insertOne(document as any);
+      return document as PlatformLogEntry;
+    } catch (retryError) {
+      if (isMongoConnectionError(retryError)) {
+        console.warn("Platform audit log skipped due to Mongo connectivity failure.");
+        return null;
+      }
+
+      throw retryError;
     }
-
-    const reconnectClient = await ensureMongoClient(uri);
-    const dbName = process.env.MONGODB_NAME ?? "credits";
-    const collectionName = process.env.MONGODB_LOGS_COLLECTION ?? "platform_logs";
-    const retryCollection = reconnectClient.db(dbName).collection(collectionName);
-
-    await retryCollection.insertOne(document as any);
-
-    return document as PlatformLogEntry;
   }
 };
 
@@ -241,26 +270,43 @@ export const listPlatformLogs = async (limit = 20, page = 1) => {
     };
   }
 
-  const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(Math.floor(limit), 100) : 20;
-  const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
-  const total = await collection.countDocuments({});
-  const pagination = paginatePlatformLogs({ total, page: safePage, limit: safeLimit });
-  const skip = (safePage - 1) * safeLimit;
+  try {
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(Math.floor(limit), 100) : 20;
+    const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+    const total = await collection.countDocuments({});
+    const pagination = paginatePlatformLogs({ total, page: safePage, limit: safeLimit });
+    const skip = (safePage - 1) * safeLimit;
 
-  const docs = await collection
-    .find({})
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(safeLimit)
-    .toArray();
+    const docs = await collection
+      .find({})
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(safeLimit)
+      .toArray();
 
-  return {
-    logs: docs as unknown as PlatformLogEntry[],
-    total: pagination.total,
-    page: pagination.page,
-    limit: pagination.limit,
-    totalPages: pagination.totalPages,
-    hasPreviousPage: pagination.hasPreviousPage,
-    hasNextPage: pagination.hasNextPage,
-  };
+    return {
+      logs: docs as unknown as PlatformLogEntry[],
+      total: pagination.total,
+      page: pagination.page,
+      limit: pagination.limit,
+      totalPages: pagination.totalPages,
+      hasPreviousPage: pagination.hasPreviousPage,
+      hasNextPage: pagination.hasNextPage,
+    };
+  } catch (error) {
+    if (isMongoConnectionError(error)) {
+      console.warn("Platform log listing skipped because Mongo is unavailable.");
+      return {
+        logs: [] as PlatformLogEntry[],
+        total: 0,
+        page: 1,
+        limit: Math.max(1, Number(limit) || 20),
+        totalPages: 0,
+        hasPreviousPage: false,
+        hasNextPage: false,
+      };
+    }
+
+    throw error;
+  }
 };
