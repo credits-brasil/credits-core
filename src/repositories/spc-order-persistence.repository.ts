@@ -29,7 +29,7 @@ export const describeMongoFailure = (error: unknown, context: string) => {
   const uri = getMongoUri();
   const dbName = process.env.MONGODB_NAME ?? "credits";
   const collectionName = process.env.MONGODB_COLLECTION ?? "spc_report_orders";
-  const tlsEnabled = /^mongodb\+srv:/i.test(String(uri ?? "")) || /(?:^|[?&])(tls|ssl)=true/i.test(String(uri ?? "")) || process.env.MONGODB_TLS === "true";
+  const tlsEnabled = Boolean(uri ? getMongoClientOptions(uri).tls : false);
 
   return `${context}. uri=${maskMongoUri(uri)}; db=${dbName}; collection=${collectionName}; tls=${tlsEnabled}; name=${name}; code=${code}; message=${message}`;
 };
@@ -40,10 +40,23 @@ const getMongoUri = () => {
   return mongoUri;
 };
 
-export const getMongoClientOptions = (uri: string) => {
+const getEffectiveMongoTlsSetting = (uri: string) => {
   const explicitTlsEnabled = /(?:^|[?&])(tls|ssl)=true/i.test(uri);
   const explicitTlsDisabled = /(?:^|[?&])(tls|ssl)=false/i.test(uri);
-  const useTls = explicitTlsEnabled && !explicitTlsDisabled;
+
+  if (explicitTlsDisabled) {
+    return false;
+  }
+
+  if (explicitTlsEnabled) {
+    return true;
+  }
+
+  return process.env.MONGODB_TLS === "true";
+};
+
+export const getMongoClientOptions = (uri: string) => {
+  const useTls = getEffectiveMongoTlsSetting(uri);
   const allowInvalidCertificates = process.env.MONGODB_TLS_ALLOW_INVALID_CERTS === "true";
 
   return {

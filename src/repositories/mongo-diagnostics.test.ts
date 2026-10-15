@@ -21,3 +21,15 @@ test("getMongoClientOptions does not force tls for mongodb+srv URIs", () => {
 
   assert.equal((options as any).tls, undefined);
 });
+
+test("describeMongoFailure does not mark mongodb+srv URIs as tls-enabled unless explicitly configured", () => {
+  process.env.MONGODB_URI = "mongodb+srv://user:pass@cluster.mongodb.net/credits?retryWrites=true&w=majority&authSource=admin";
+
+  const details = describeMongoFailure(
+    { name: "MongoServerSelectionError", code: "TIMEOUT", message: "tlsv1 alert internal error" },
+    "Mongo audit collection unavailable; skipping platform log save.",
+  );
+
+  assert.match(details, /tls=false/);
+  delete process.env.MONGODB_URI;
+});
