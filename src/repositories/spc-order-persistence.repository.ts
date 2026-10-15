@@ -7,19 +7,14 @@ export type Spc325OrderSnapshot = {
   insumos: string[];
   xml: string;
   json: unknown;
-  result: unknown;
+  result: unknown | null;
+  error?: string;
 };
 
 let mongoClient: MongoClient | null = null;
 
 const getMongoUri = () => {
-  const mongoUri = process.env.MONGODB_URI;
-
-  if (!mongoUri) {
-    throw new Error(
-      "Mongo URI não configurada. Defina MONGO_URI no ambiente.",
-    );
-  }
+  const mongoUri = process.env.MONGODB_URI ?? process.env.MONGO_URI ?? null;
 
   return mongoUri;
 };
@@ -84,6 +79,11 @@ const isMongoConnectionError = (error: unknown) => {
 const getMongoCollection = async () => {
   const uri = getMongoUri();
 
+  if (!uri) {
+    console.warn("Mongo SPC persistence unavailable because no URI was configured; continuing without snapshot storage.");
+    return null;
+  }
+
   try {
     const client = await ensureMongoClient(uri);
 
@@ -99,6 +99,23 @@ const getMongoCollection = async () => {
 
     throw error;
   }
+};
+
+export const buildSpcOrderSnapshotFallbackPayload = (
+  payload: Spc325OrderSnapshot,
+) => ({
+  ...payload,
+  result:
+    payload.result ??
+    {
+      error: payload.error ?? "SPC_RESULT_MAPPING_FAILED",
+    },
+});
+
+export const saveSpcOrderSnapshotFallback = async (
+  payload: Spc325OrderSnapshot,
+) => {
+  return saveSpcOrderSnapshot(buildSpcOrderSnapshotFallbackPayload(payload));
 };
 
 export const saveSpcOrderSnapshot = async (

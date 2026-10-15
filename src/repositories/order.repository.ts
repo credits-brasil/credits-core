@@ -13,6 +13,7 @@ export type CreateOrderInput = {
   inputs: Prisma.InputJsonValue;
   ip: string;
   host: string;
+  error?: string | null;
 };
 
 export const normalizeProtocolValue = (protocol: unknown): string | null => {
@@ -76,6 +77,7 @@ export const finishOrder = (
   duration: number,
   status: "SUCCESS" | "FAILED",
   protocol?: string | null,
+  error?: string | null,
 ) => {
   const normalizedProtocol = normalizeProtocolValue(protocol);
 
@@ -85,6 +87,7 @@ export const finishOrder = (
       duration,
       status,
       ...(protocol !== undefined ? { protocol: normalizedProtocol } : {}),
+      ...(error !== undefined ? { error: error?.trim() ? error : null } : {}),
     },
   });
 };
