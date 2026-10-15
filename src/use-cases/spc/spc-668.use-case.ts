@@ -35,6 +35,7 @@ import { get24ParticipacaoEmpresaInput } from "@/utils/inputs/get-24-participaca
 import { get5258ParticipacaoEmpresaInput } from "@/utils/inputs/get-5258-participacao-empresa.input";
 import { get5186QuadroSocialMaisCompletoPjInput } from "@/utils/inputs/get-5186-quadro-social-mais-completo-pj.input";
 import { createOrder, finishOrder } from "@/repositories/order.repository";
+import { saveSpcOrderSnapshot } from "@/repositories/spc-order-persistence.repository";
 import { get5267QuantidadeFuncionarioInput } from "@/utils/inputs/get-5267-quantidade-funcionario.input";
 import { get5184RiscoCreditoPJInput } from "@/utils/inputs/get-5184-risco-credito-pj.input";
 import { get5229ScorePJInput } from "@/utils/inputs/get-5229-score-pj.input";
@@ -82,8 +83,7 @@ export async function spc668UseCase(
       insumos,
     });
 
-    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS");
-    return {
+    const result = {
       protocolo: json["S:Envelope"]["S:Body"]["ns2:resultado"].protocolo?.$,
       operador: json["S:Envelope"]["S:Body"]["ns2:resultado"].operador?.$,
 
@@ -377,6 +377,21 @@ export async function spc668UseCase(
       // 5183
       ...(insumos.includes(5183) && {}),
     };
+
+    const protocol = result.protocolo ?? null;
+
+    await saveSpcOrderSnapshot({
+      orderId: order.id,
+      document,
+      typeDocument,
+      insumos: insumos.map(String),
+      xml,
+      json,
+      result,
+    });
+
+    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS", protocol);
+    return result;
   } catch (error) {
     await finishOrder(order.id, Date.now() - startedAt, "FAILED");
     throw new FriendlyError({

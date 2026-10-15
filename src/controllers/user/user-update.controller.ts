@@ -2,7 +2,9 @@ import { FastifyReply, FastifyRequest } from "fastify";
 
 import { AppError, AppMessages } from "@/constants/user";
 import { CompanyUserCompanyIdParams, CompanyUserIdParams, CompanyUserUpdateBody } from "@/models/user.model";
+import { findCompanyUserById } from "@/repositories/user.repository";
 import { FriendlyError } from "@/utils";
+import { logPlatformAction } from "@/utils/platform-log";
 import { userUpdateUseCase } from "@/use-cases/user";
 
 export const userUpdateController = async (
@@ -15,7 +17,19 @@ export const userUpdateController = async (
   const { companyId, id } = request.params;
 
   try {
+    const previousState = await findCompanyUserById(id);
     const companyUser = await userUpdateUseCase(companyId, id, request.body);
+
+    await logPlatformAction(request, {
+      action: "USER_UPDATE",
+      entity: "USER",
+      previousState,
+      newState: companyUser,
+      companyId,
+      metadata: {
+        userRelationId: id,
+      },
+    });
 
     return reply.code(200).send({
       statusCode: 200,

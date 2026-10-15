@@ -3,6 +3,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { AppError, AppMessages } from "@/constants/auth";
 import { authUserLoginUseCase } from "@/use-cases/auth-user";
 import { FriendlyError } from "@/utils";
+import { logPlatformAction } from "@/utils/platform-log";
 
 export const authUserLoginController = async (
   request: FastifyRequest<{
@@ -14,6 +15,19 @@ export const authUserLoginController = async (
 
   try {
     const session = await authUserLoginUseCase(email, password);
+
+    await logPlatformAction(request, {
+      action: "USER_LOGIN",
+      entity: "AUTH",
+      previousState: null,
+      newState: {
+        email,
+        loginAt: new Date().toISOString(),
+      },
+      metadata: {
+        loginType: "USER",
+      },
+    });
 
     return reply.code(200).send({
       statusCode: 200,

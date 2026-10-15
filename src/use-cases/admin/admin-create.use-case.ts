@@ -11,7 +11,9 @@ export async function adminCreateUseCase(input: CreateAdminInput) {
   const name = input.name?.trim();
   const cpf = input.cpf?.trim();
   const email = input.email?.trim().toLowerCase();
-  const password = "1234567890";
+  const password = String(
+    Math.floor(10000000 + Math.random() * 90000000),
+  );
 
   if (!name || !cpf || !email) {
     throw new FriendlyError({

@@ -81,6 +81,7 @@ import { get5264AlertaCPFSuspeitoInput } from "@/utils/inputs/get-5264-insumo_al
 import { get5239ClassificacaoRiscoDebitosAtivosInput } from "@/utils/inputs/get-5239-insumo-classificacao-risco-debitos-ativos.input";
 import { get5122RendaPresumidaSPCInput } from "@/utils/inputs/get-5122-renda-presumida-spc.input";
 import { createOrder, finishOrder } from "@/repositories/order.repository";
+import { saveSpcOrderSnapshot } from "@/repositories/spc-order-persistence.repository";
 
 export async function spc325UseCase(
   document: string,
@@ -186,7 +187,7 @@ export async function spc325UseCase(
       (insumo) => !allowedInsumos[typeDocument].includes(insumo),
     );
 
-    console.log(invalidInsumos, "Insumos inválidos no use-case");
+    // console.log(invalidInsumos, "Insumos inválidos no use-case");
 
     if (invalidInsumos.length > 0) {
       throw new FriendlyError({
@@ -203,7 +204,7 @@ export async function spc325UseCase(
       insumos,
     });
 
-    console.log(xml, "XML recebido do serviço SPC");
+    // console.log(xml, "XML recebido do serviço SPC");
 
     const result =
       typeDocument === "CPF"
@@ -1080,7 +1081,20 @@ export async function spc325UseCase(
             }),
           };
 
-    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS");
+    const protocol = result.protocolo ?? null;
+
+    await saveSpcOrderSnapshot({
+      orderId: order.id,
+      document,
+      typeDocument,
+      insumos,
+      xml,
+      json,
+      result,
+    });
+
+    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS", protocol);
+
     return result;
   } catch (error) {
     await finishOrder(order.id, Date.now() - startedAt, "FAILED");

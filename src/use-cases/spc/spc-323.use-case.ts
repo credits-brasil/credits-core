@@ -43,6 +43,7 @@ import { get5228ScoreCadastroPositivoInput } from "@/utils/inputs/get-5228-score
 import { get5190IndiceRelacionamentoMercadoPfInput } from "@/utils/inputs/get-5190-indice-relacionamento-mercado-pf.input";
 import { get5268ValidaCelularInput } from "@/utils/inputs/get-5268-valida-celular.input";
 import { createOrder, finishOrder } from "@/repositories/order.repository";
+import { saveSpcOrderSnapshot } from "@/repositories/spc-order-persistence.repository";
 
 export async function spc323UseCase(
   document: string,
@@ -117,8 +118,7 @@ export async function spc323UseCase(
 
     const resultado = json["S:Envelope"]["S:Body"]["ns2:resultado"];
 
-    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS");
-    return {
+    const result = {
       protocolo: resultado.protocolo?.$,
       operador: resultado.operador?.$,
 
@@ -395,6 +395,21 @@ export async function spc323UseCase(
         ),
       }),
     };
+
+    const protocol = result.protocolo ?? null;
+
+    await saveSpcOrderSnapshot({
+      orderId: order.id,
+      document,
+      typeDocument,
+      insumos: insumos.map(String),
+      xml,
+      json,
+      result,
+    });
+
+    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS", protocol);
+    return result;
   } catch (error) {
     await finishOrder(order.id, Date.now() - startedAt, "FAILED");
     throw new FriendlyError({

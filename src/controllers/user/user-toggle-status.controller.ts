@@ -2,7 +2,9 @@ import { FastifyReply, FastifyRequest } from "fastify";
 
 import { AppError, AppMessages } from "@/constants/user";
 import { CompanyUserCompanyIdParams, CompanyUserIdParams } from "@/models/user.model";
+import { findCompanyUserById } from "@/repositories/user.repository";
 import { FriendlyError } from "@/utils";
+import { logPlatformAction } from "@/utils/platform-log";
 import { userToggleStatusUseCase } from "@/use-cases/user";
 
 export const userToggleStatusController = async (
@@ -14,7 +16,19 @@ export const userToggleStatusController = async (
   const { companyId, id } = request.params;
 
   try {
+    const previousState = await findCompanyUserById(id);
     const companyUser = await userToggleStatusUseCase(companyId, id);
+
+    await logPlatformAction(request, {
+      action: "USER_STATUS_UPDATE",
+      entity: "USER",
+      previousState,
+      newState: companyUser,
+      companyId,
+      metadata: {
+        userRelationId: id,
+      },
+    });
 
     return reply.code(200).send({
       statusCode: 200,

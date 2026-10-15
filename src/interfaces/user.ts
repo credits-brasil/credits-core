@@ -5,7 +5,6 @@ export interface CreateCompanyUserInput {
   companyId: string;
   name: string;
   cpf: string;
-  password: string;
   role?: UserRole;
   status?: UserCompanyStatus;
 }

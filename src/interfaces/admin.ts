@@ -4,7 +4,6 @@ export interface CreateAdminInput {
   name: string;
   cpf: string;
   email: string;
-  password?: string;
   firstAccess?: boolean;
 }
 

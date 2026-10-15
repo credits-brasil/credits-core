@@ -321,6 +321,15 @@ export interface Resultado {
         "quantidade-total": string;
       };
     };
+    "detalhe-score-cadastro-positivo": {
+      $: {
+        "indice-risco-credito-score": string;
+        mensagem: string;
+        probabilidadeInadimplencia: string;
+        score: string;
+        "score-maximo-escala": string;
+      };
+    };
   };
 
   //  5229
