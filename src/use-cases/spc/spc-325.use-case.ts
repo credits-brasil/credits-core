@@ -276,9 +276,9 @@ export async function spc325UseCase(
             //   ),
 
             // 22
-            // contumacia: get22ContumaciaInput(
-            //   json["S:Envelope"]["S:Body"]["ns2:resultado"]["contumacia"],
-            // ),
+            contumacia: get22ContumaciaInput(
+              json["S:Envelope"]["S:Body"]["ns2:resultado"]["contumacia"],
+            ),
 
             // 20
             "credito-concedido": get20CreditoConcedidoInput(
@@ -734,9 +734,9 @@ export async function spc325UseCase(
             //   ),
 
             // 22
-            // contumacia: get22ContumaciaInput(
-            //   json["S:Envelope"]["S:Body"]["ns2:resultado"]["contumacia"],
-            // ),
+            contumacia: get22ContumaciaInput(
+              json["S:Envelope"]["S:Body"]["ns2:resultado"]["contumacia"],
+            ),
 
             // 20
             "credito-concedido": get20CreditoConcedidoInput(
