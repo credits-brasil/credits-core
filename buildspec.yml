@@ -1,3 +1,4 @@
+
 version: 0.2
 
 phases:
@@ -5,19 +6,31 @@ phases:
     runtime-versions:
       nodejs: 22
     commands:
+      - echo "Instalando dependências..."
       - npm ci
 
   # pre_build:
   #   commands:
-  #     - npm run test
+  #     - npm run test:ci
 
   build:
     commands:
+      - echo "Compilando aplicação TypeScript..."
       - npm run build
+      - echo "Validando arquivo principal..."
+      - test -f dist/server.js
+
+  post_build:
+    commands:
+      - echo "Build concluído com sucesso."
+      - echo "Preparando artefatos para o Elastic Beanstalk..."
 
 artifacts:
+  base-directory: .
   files:
-    - '**/*'
-  exclude-paths:
-    - 'node_modules/**/*'
-    - '.git/**/*'
+    - 'dist/**/*'
+    - 'prisma/**/*'
+    - 'package.json'
+    - 'package-lock.json'
+    - 'Procfile'
+  discard-paths: no
