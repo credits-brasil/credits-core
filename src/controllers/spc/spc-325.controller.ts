@@ -20,7 +20,9 @@ export const spc325Controller = async (
   reply: FastifyReply,
 ) => {
   const controllerStartedAt = Date.now();
-  
+
+  // teste
+
   const { document, typeDocument, insumos, companyId } = request.body;
 
   const authStartedAt = Date.now();
