@@ -21,7 +21,6 @@ export const spc325Controller = async (
 ) => {
   const controllerStartedAt = Date.now();
 
-  // teste
 
   const { document, typeDocument, insumos, companyId } = request.body;
 
