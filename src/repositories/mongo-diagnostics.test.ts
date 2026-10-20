@@ -22,6 +22,24 @@ test("getMongoClientOptions does not force tls for mongodb+srv URIs", () => {
   assert.equal((options as any).tls, undefined);
 });
 
+test("getMongoClientOptions reads TLS from the URI and ignores extra Mongo environment variables", () => {
+  process.env.MONGODB_TLS = "true";
+  process.env.MONGODB_TLS_ALLOW_INVALID_CERTS = "true";
+  process.env.MONGODB_AUTH_SOURCE = "other-db";
+
+  const optionsWithoutUriFlags = getMongoClientOptions("mongodb+srv://user:pass@cluster.mongodb.net/credits");
+  const optionsWithUriTls = getMongoClientOptions("mongodb+srv://user:pass@cluster.mongodb.net/credits?tls=true&authSource=admin");
+
+  assert.equal((optionsWithoutUriFlags as any).tls, undefined);
+  assert.equal((optionsWithoutUriFlags as any).tlsAllowInvalidCertificates, undefined);
+  assert.equal((optionsWithoutUriFlags as any).authSource, undefined);
+  assert.equal((optionsWithUriTls as any).tls, true);
+
+  delete process.env.MONGODB_TLS;
+  delete process.env.MONGODB_TLS_ALLOW_INVALID_CERTS;
+  delete process.env.MONGODB_AUTH_SOURCE;
+});
+
 test("describeMongoFailure does not mark mongodb+srv URIs as tls-enabled unless explicitly configured", () => {
   process.env.MONGODB_URI = "mongodb+srv://user:pass@cluster.mongodb.net/credits?retryWrites=true&w=majority&authSource=admin";
 

@@ -65,15 +65,15 @@ export const describeMongoFailure = (error: unknown, context: string) => {
   const code = String(mongoError?.code ?? "N/A");
   const message = String(mongoError?.message ?? error ?? "Unknown Mongo error");
   const uri = getMongoUri();
-  const dbName = process.env.MONGODB_NAME ?? "credits";
-  const collectionName = process.env.MONGODB_LOGS_COLLECTION ?? "platform_logs";
+  const dbName = "credits";
+  const collectionName = "platform_logs";
   const tlsEnabled = Boolean(uri ? getMongoClientOptions(uri).tls : false);
 
   return `${context}. uri=${maskMongoUri(uri)}; db=${dbName}; collection=${collectionName}; tls=${tlsEnabled}; name=${name}; code=${code}; message=${message}`;
 };
 
 const getMongoUri = () => {
-  return process.env.MONGODB_URI ?? process.env.SPC_MONGO_URI ?? "";
+  return process.env.MONGODB_URI ?? "";
 };
 
 const getEffectiveMongoTlsSetting = (uri: string) => {
@@ -88,17 +88,14 @@ const getEffectiveMongoTlsSetting = (uri: string) => {
     return true;
   }
 
-  return process.env.MONGODB_TLS === "true";
+  return false;
 };
 
 export const getMongoClientOptions = (uri: string) => {
   const useTls = getEffectiveMongoTlsSetting(uri);
-  const allowInvalidCertificates = process.env.MONGODB_TLS_ALLOW_INVALID_CERTS === "true";
 
   return {
     ...(useTls ? { tls: true } : {}),
-    ...(allowInvalidCertificates ? { tlsAllowInvalidCertificates: true } : {}),
-    authSource: process.env.MONGODB_AUTH_SOURCE ?? "admin",
     retryWrites: true,
     connectTimeoutMS: 30000,
     serverSelectionTimeoutMS: 30000,
@@ -160,10 +157,7 @@ const getMongoCollection = async () => {
   try {
     const client = await ensureMongoClient(uri);
 
-    const dbName = process.env.MONGODB_NAME ?? "credits";
-    const collectionName = process.env.MONGODB_LOGS_COLLECTION ?? "platform_logs";
-
-    return client.db(dbName).collection(collectionName);
+    return client.db("credits").collection("platform_logs");
   } catch (error) {
     if (isMongoConnectionError(error)) {
       console.warn(describeMongoFailure(error, "Mongo audit collection unavailable; skipping platform log save."));

@@ -27,17 +27,15 @@ export const describeMongoFailure = (error: unknown, context: string) => {
   const code = String(mongoError?.code ?? "N/A");
   const message = String(mongoError?.message ?? error ?? "Unknown Mongo error");
   const uri = getMongoUri();
-  const dbName = process.env.MONGODB_NAME ?? "credits";
-  const collectionName = process.env.MONGODB_COLLECTION ?? "spc_report_orders";
+  const dbName = "credits";
+  const collectionName = "spc_report_orders";
   const tlsEnabled = Boolean(uri ? getMongoClientOptions(uri).tls : false);
 
   return `${context}. uri=${maskMongoUri(uri)}; db=${dbName}; collection=${collectionName}; tls=${tlsEnabled}; name=${name}; code=${code}; message=${message}`;
 };
 
 const getMongoUri = () => {
-  const mongoUri = process.env.MONGODB_URI ?? process.env.MONGO_URI ?? null;
-
-  return mongoUri;
+  return process.env.MONGODB_URI ?? null;
 };
 
 const getEffectiveMongoTlsSetting = (uri: string) => {
@@ -52,17 +50,14 @@ const getEffectiveMongoTlsSetting = (uri: string) => {
     return true;
   }
 
-  return process.env.MONGODB_TLS === "true";
+  return false;
 };
 
 export const getMongoClientOptions = (uri: string) => {
   const useTls = getEffectiveMongoTlsSetting(uri);
-  const allowInvalidCertificates = process.env.MONGODB_TLS_ALLOW_INVALID_CERTS === "true";
 
   return {
     ...(useTls ? { tls: true } : {}),
-    ...(allowInvalidCertificates ? { tlsAllowInvalidCertificates: true } : {}),
-    authSource: process.env.MONGODB_AUTH_SOURCE ?? "admin",
     retryWrites: true,
     connectTimeoutMS: 30000,
     serverSelectionTimeoutMS: 30000,
@@ -118,17 +113,14 @@ const getMongoCollection = async () => {
   const uri = getMongoUri();
 
   if (!uri) {
-    console.warn("Mongo SPC persistence unavailable because no URI was configured; continuing without snapshot storage. context=MONGODB_URI/MONGO_URI missing; db=credits; collection=spc_report_orders");
+    console.warn("Mongo SPC persistence unavailable because MONGODB_URI was not configured; continuing without snapshot storage. db=credits; collection=spc_report_orders");
     return null;
   }
 
   try {
     const client = await ensureMongoClient(uri);
 
-    const dbName = process.env.MONGODB_NAME ?? "credits";
-    const collectionName = process.env.MONGODB_COLLECTION ?? "spc_report_orders";
-
-    return client.db(dbName).collection(collectionName);
+    return client.db("credits").collection("spc_report_orders");
   } catch (error) {
     if (isMongoConnectionError(error)) {
       console.warn(describeMongoFailure(error, "Mongo SPC persistence unavailable; continuing without snapshot storage."));
