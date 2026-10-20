@@ -1,4 +1,5 @@
 import { AppError } from "@/constants/spc";
+import { randomUUID } from "node:crypto";
 
 import { FriendlyError, getTipoConsumidor } from "@/utils";
 
@@ -76,7 +77,7 @@ import { get5255PEPInput } from "@/utils/inputs/get-5255-insumo-pep.input";
 import { get5264AlertaCPFSuspeitoInput } from "@/utils/inputs/get-5264-insumo_alerta-cpf-suspeito.input";
 import { get5239ClassificacaoRiscoDebitosAtivosInput } from "@/utils/inputs/get-5239-insumo-classificacao-risco-debitos-ativos.input";
 import { get5122RendaPresumidaSPCInput } from "@/utils/inputs/get-5122-renda-presumida-spc.input";
-import { createOrder, finishOrder } from "@/repositories/order.repository";
+import { enqueueCreateOrder, enqueueFinishOrder } from "@/repositories/order.repository";
 import {
   buildSpcOrderSnapshotFallbackPayload,
   saveSpcOrderSnapshot,
@@ -99,7 +100,10 @@ export async function spc325UseCase(
 ) {
   console.log(insumos, "Insumos recebidos no use-case");
 
-  const order = await createOrder({
+  const orderId = randomUUID();
+  const startedAt = Date.now();
+
+  enqueueCreateOrder(orderId, {
     userId: audit.userId,
     userName: audit.userName,
     companyId: audit.companyId,
@@ -112,7 +116,6 @@ export async function spc325UseCase(
     host: audit.host,
   });
 
-  const startedAt = Date.now();
   let xml = "";
   let json: any = null;
 
@@ -1089,7 +1092,7 @@ export async function spc325UseCase(
     const protocol = result.protocolo ?? null;
 
     await saveSpcOrderSnapshot({
-      orderId: order.id,
+      orderId,
       document,
       typeDocument,
       insumos,
@@ -1098,7 +1101,7 @@ export async function spc325UseCase(
       result,
     });
 
-    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS", protocol);
+    enqueueFinishOrder(orderId, Date.now() - startedAt, "SUCCESS", protocol);
 
     return result;
   } catch (error) {
@@ -1106,7 +1109,7 @@ export async function spc325UseCase(
 
     await saveSpcOrderSnapshotFallback(
       buildSpcOrderSnapshotFallbackPayload({
-        orderId: order.id,
+        orderId,
         document,
         typeDocument,
         insumos,
@@ -1117,8 +1120,8 @@ export async function spc325UseCase(
       }),
     );
 
-    await finishOrder(
-      order.id,
+    enqueueFinishOrder(
+      orderId,
       Date.now() - startedAt,
       "FAILED",
       undefined,
