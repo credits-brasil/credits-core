@@ -33,19 +33,18 @@ export const createBackgroundQueue = <T>(processJob: (job: T) => Promise<unknown
   return {
     enqueue(job: T) {
       jobs.push(job);
-
-      if (!isProcessing) {
-        setImmediate(() => void processJobs());
-      }
     },
     flush() {
       if (!isProcessing && jobs.length === 0) {
         return Promise.resolve();
       }
 
-      return new Promise<void>((resolve) => {
+      const flushed = new Promise<void>((resolve) => {
         waiters.push(resolve);
       });
+
+      void processJobs();
+      return flushed;
     },
   };
 };

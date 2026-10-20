@@ -40,6 +40,16 @@ server.register(adminRoutes);
 server.register(orderRoutes);
 server.register(platformLogRoutes);
 
+server.addHook("onResponse", (_request, _reply, done) => {
+  setImmediate(() => {
+    void Promise.all([flushOrderWriteQueue(), flushSpcOrderSnapshotQueue()]).catch((error) => {
+      server.log.error({ err: error }, "Failed to flush background persistence queues");
+    });
+  });
+
+  done();
+});
+
 server.addHook("onClose", async () => {
   await flushPlatformLogQueue();
   await flushOrderWriteQueue();

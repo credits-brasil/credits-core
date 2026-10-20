@@ -16,6 +16,8 @@ export const HTTPSPCService = async ({
   document,
   insumos,
 }: SPCRequestParams) => {
+  const requestStartedAt = Date.now();
+
   try {
     const response = await axios.post(
       "https://servicos.spc.org.br/spc/remoting/ws/consulta/consultaWebService",
@@ -38,12 +40,21 @@ export const HTTPSPCService = async ({
       },
     );
 
+    const responseReceivedAt = Date.now();
     const xml = response.data;
 
     const json = await parseStringPromise(xml, {
       explicitArray: false,
       ignoreAttrs: false,
       trim: true,
+    });
+    const finishedAt = Date.now();
+
+    console.info("SPC service timing", {
+      productCode,
+      requestMs: responseReceivedAt - requestStartedAt,
+      xmlParseMs: finishedAt - responseReceivedAt,
+      totalMs: finishedAt - requestStartedAt,
     });
 
     return {
