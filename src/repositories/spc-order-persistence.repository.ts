@@ -1,4 +1,5 @@
 import { MongoClient } from "mongodb";
+import { createBackgroundQueue } from "./background-queue";
 
 export type Spc325OrderSnapshot = {
   orderId: string;
@@ -199,6 +200,20 @@ export const saveSpcOrderSnapshot = async (
     throw error;
   }
 };
+
+const spcSnapshotQueue = createBackgroundQueue(async (payload: Spc325OrderSnapshot) => {
+  await saveSpcOrderSnapshot(payload);
+});
+
+export const enqueueSpcOrderSnapshot = (payload: Spc325OrderSnapshot) => {
+  spcSnapshotQueue.enqueue(payload);
+};
+
+export const enqueueSpcOrderSnapshotFallback = (payload: Spc325OrderSnapshot) => {
+  spcSnapshotQueue.enqueue(buildSpcOrderSnapshotFallbackPayload(payload));
+};
+
+export const flushSpcOrderSnapshotQueue = () => spcSnapshotQueue.flush();
 
 export const findSpcOrderSnapshotsByOrderIds = async (orderIds: string[]) => {
   if (orderIds.length === 0) {

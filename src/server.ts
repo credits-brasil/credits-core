@@ -16,6 +16,7 @@ import { platformLogRoutes } from "./routes/platform-log.routes";
 import { registerPlatformAudit } from "./hooks/platform-audit";
 import { flushPlatformLogQueue } from "./repositories/platform-log.repository";
 import { flushOrderWriteQueue } from "./repositories/order.repository";
+import { flushSpcOrderSnapshotQueue } from "./repositories/spc-order-persistence.repository";
 
 const server: FastifyInstance = Fastify({
   logger: true,
@@ -42,6 +43,7 @@ server.register(platformLogRoutes);
 server.addHook("onClose", async () => {
   await flushPlatformLogQueue();
   await flushOrderWriteQueue();
+  await flushSpcOrderSnapshotQueue();
 });
 
 const PORT = Number(process.env.PORT ?? 3000);

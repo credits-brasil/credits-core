@@ -79,9 +79,8 @@ import { get5239ClassificacaoRiscoDebitosAtivosInput } from "@/utils/inputs/get-
 import { get5122RendaPresumidaSPCInput } from "@/utils/inputs/get-5122-renda-presumida-spc.input";
 import { enqueueCreateOrder, enqueueFinishOrder } from "@/repositories/order.repository";
 import {
-  buildSpcOrderSnapshotFallbackPayload,
-  saveSpcOrderSnapshot,
-  saveSpcOrderSnapshotFallback,
+  enqueueSpcOrderSnapshot,
+  enqueueSpcOrderSnapshotFallback,
 } from "@/repositories/spc-order-persistence.repository";
 
 export async function spc325UseCase(
@@ -1091,7 +1090,7 @@ export async function spc325UseCase(
 
     const protocol = result.protocolo ?? null;
 
-    await saveSpcOrderSnapshot({
+    enqueueSpcOrderSnapshot({
       orderId,
       document,
       typeDocument,
@@ -1107,18 +1106,16 @@ export async function spc325UseCase(
   } catch (error) {
     const failureMessage = error instanceof Error ? error.message : String(error);
 
-    await saveSpcOrderSnapshotFallback(
-      buildSpcOrderSnapshotFallbackPayload({
-        orderId,
-        document,
-        typeDocument,
-        insumos,
-        xml,
-        json,
-        result: null,
-        error: failureMessage,
-      }),
-    );
+    enqueueSpcOrderSnapshotFallback({
+      orderId,
+      document,
+      typeDocument,
+      insumos,
+      xml,
+      json,
+      result: null,
+      error: failureMessage,
+    });
 
     enqueueFinishOrder(
       orderId,
