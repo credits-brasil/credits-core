@@ -1,35 +1,46 @@
 
 version: 0.2
 
+env:
+  variables:
+    CI: "true"
+
 phases:
   install:
     runtime-versions:
-      nodejs: 22
+      nodejs: 24
     commands:
       - echo "Instalando dependências..."
-      - npm ci
-
-  # pre_build:
-  #   commands:
-  #     - npm run test:ci
+      - npm ci --include=dev
 
   build:
     commands:
+      - echo "Gerando Prisma Client..."
+      - npx prisma generate
+
       - echo "Compilando aplicação TypeScript..."
       - npm run build
-      - echo "Validando arquivo principal..."
+
+      - echo "Validando arquivos obrigatórios..."
       - test -f dist/server.js
+      - test -f package.json
+      - test -f package-lock.json
+      - test -f Procfile
+
+      - echo "Compilação concluída com sucesso!"
 
   post_build:
     commands:
-      - echo "Build concluído com sucesso."
-      - echo "Preparando artefatos para o Elastic Beanstalk..."
+      - echo "Preparando pacote para o Elastic Beanstalk..."
+      - echo "Arquivos compilados e validados."
+      - echo "Build finalizado com sucesso!"
 
 artifacts:
   base-directory: .
   files:
     - 'dist/**/*'
     - 'prisma/**/*'
+    - 'prisma.config.ts'
     - 'package.json'
     - 'package-lock.json'
     - 'Procfile'
