@@ -1,4 +1,5 @@
 import { MongoClient } from "mongodb";
+import { createBackgroundQueue } from "./background-queue";
 
 export type Spc325OrderSnapshot = {
   orderId: string;
@@ -7,33 +8,61 @@ export type Spc325OrderSnapshot = {
   insumos: string[];
   xml: string;
   json: unknown;
-  result: unknown;
+  result: unknown | null;
+  error?: string;
 };
 
 let mongoClient: MongoClient | null = null;
 
-const getMongoUri = () => {
-  const mongoUri = process.env.MONGODB_URI;
-
-  if (!mongoUri) {
-    throw new Error(
-      "Mongo URI não configurada. Defina MONGO_URI no ambiente.",
-    );
+const maskMongoUri = (uri: string | null | undefined) => {
+  if (!uri) {
+    return "none";
   }
 
-  return mongoUri;
+  return uri.replace(/(:\/\/)([^:@/]+)(:[^@/]*)(@)/, "$1***$3$4");
 };
 
-const getMongoClientOptions = (uri: string) => {
-  const useTls = /mongodb\+srv:|tls=true|ssl=true|mongodb\.net/i.test(uri) || process.env.MONGODB_TLS === "true";
-  const allowInvalidCertificates = process.env.MONGODB_TLS_ALLOW_INVALID_CERTS === "true";
+export const describeMongoFailure = (error: unknown, context: string) => {
+  const mongoError = error as any;
+  const name = String(mongoError?.name ?? "UnknownError");
+  const code = String(mongoError?.code ?? "N/A");
+  const message = String(mongoError?.message ?? error ?? "Unknown Mongo error");
+  const uri = getMongoUri();
+  const dbName = "credits";
+  const collectionName = "spc_report_orders";
+  const tlsEnabled = Boolean(uri ? getMongoClientOptions(uri).tls : false);
+
+  return `${context}. uri=${maskMongoUri(uri)}; db=${dbName}; collection=${collectionName}; tls=${tlsEnabled}; name=${name}; code=${code}; message=${message}`;
+};
+
+const getMongoUri = () => {
+  return process.env.MONGODB_URI ?? null;
+};
+
+const getEffectiveMongoTlsSetting = (uri: string) => {
+  const explicitTlsEnabled = /(?:^|[?&])(tls|ssl)=true/i.test(uri);
+  const explicitTlsDisabled = /(?:^|[?&])(tls|ssl)=false/i.test(uri);
+
+  if (explicitTlsDisabled) {
+    return false;
+  }
+
+  if (explicitTlsEnabled) {
+    return true;
+  }
+
+  return false;
+};
+
+export const getMongoClientOptions = (uri: string) => {
+  const useTls = getEffectiveMongoTlsSetting(uri);
 
   return {
     ...(useTls ? { tls: true } : {}),
-    ...(allowInvalidCertificates ? { tlsAllowInvalidCertificates: true } : {}),
-    authSource: process.env.MONGODB_AUTH_SOURCE ?? "admin",
     retryWrites: true,
-    serverSelectionTimeoutMS: 20000,
+    connectTimeoutMS: 30000,
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 30000,
     maxPoolSize: 5,
   };
 };
@@ -84,21 +113,41 @@ const isMongoConnectionError = (error: unknown) => {
 const getMongoCollection = async () => {
   const uri = getMongoUri();
 
+  if (!uri) {
+    console.warn("Mongo SPC persistence unavailable because MONGODB_URI was not configured; continuing without snapshot storage. db=credits; collection=spc_report_orders");
+    return null;
+  }
+
   try {
     const client = await ensureMongoClient(uri);
 
-    const dbName = process.env.MONGODB_NAME ?? "credits";
-    const collectionName = process.env.MONGODB_COLLECTION ?? "spc_report_orders";
-
-    return client.db(dbName).collection(collectionName);
+    return client.db("credits").collection("spc_report_orders");
   } catch (error) {
     if (isMongoConnectionError(error)) {
-      console.warn("Mongo SPC persistence unavailable; continuing without snapshot storage.");
+      console.warn(describeMongoFailure(error, "Mongo SPC persistence unavailable; continuing without snapshot storage."));
       return null;
     }
 
+    console.error(describeMongoFailure(error, "Mongo SPC persistence failed with a non-network error."));
     throw error;
   }
+};
+
+export const buildSpcOrderSnapshotFallbackPayload = (
+  payload: Spc325OrderSnapshot,
+) => ({
+  ...payload,
+  result:
+    payload.result ??
+    {
+      error: payload.error ?? "SPC_RESULT_MAPPING_FAILED",
+    },
+});
+
+export const saveSpcOrderSnapshotFallback = async (
+  payload: Spc325OrderSnapshot,
+) => {
+  return saveSpcOrderSnapshot(buildSpcOrderSnapshotFallbackPayload(payload));
 };
 
 export const saveSpcOrderSnapshot = async (
@@ -139,7 +188,7 @@ export const saveSpcOrderSnapshot = async (
     };
   } catch (error) {
     if (isMongoConnectionError(error)) {
-      console.warn("SPC snapshot storage skipped because Mongo is unavailable.");
+      console.warn(describeMongoFailure(error, "SPC snapshot storage skipped because Mongo is unavailable."));
       return {
         id: orderId,
         savedAt: now,
@@ -147,9 +196,24 @@ export const saveSpcOrderSnapshot = async (
       };
     }
 
+    console.error(describeMongoFailure(error, "SPC snapshot storage failed with a non-network error."));
     throw error;
   }
 };
+
+const spcSnapshotQueue = createBackgroundQueue(async (payload: Spc325OrderSnapshot) => {
+  await saveSpcOrderSnapshot(payload);
+});
+
+export const enqueueSpcOrderSnapshot = (payload: Spc325OrderSnapshot) => {
+  spcSnapshotQueue.enqueue(payload);
+};
+
+export const enqueueSpcOrderSnapshotFallback = (payload: Spc325OrderSnapshot) => {
+  spcSnapshotQueue.enqueue(buildSpcOrderSnapshotFallbackPayload(payload));
+};
+
+export const flushSpcOrderSnapshotQueue = () => spcSnapshotQueue.flush();
 
 export const findSpcOrderSnapshotsByOrderIds = async (orderIds: string[]) => {
   if (orderIds.length === 0) {
@@ -175,10 +239,11 @@ export const findSpcOrderSnapshotsByOrderIds = async (orderIds: string[]) => {
     }>;
   } catch (error) {
     if (isMongoConnectionError(error)) {
-      console.warn("SPC snapshot lookup skipped because Mongo is unavailable.");
+      console.warn(describeMongoFailure(error, "SPC snapshot lookup skipped because Mongo is unavailable."));
       return [];
     }
 
+    console.error(describeMongoFailure(error, "SPC snapshot lookup failed with a non-network error."));
     throw error;
   }
 };

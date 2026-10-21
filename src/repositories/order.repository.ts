@@ -1,7 +1,9 @@
 import { prisma } from "./prisma";
 import type { Prisma } from "../generated/prisma/client";
+import { createBackgroundQueue } from "./background-queue";
 
 export type CreateOrderInput = {
+  id?: string;
   userId: string;
   userName: string;
   companyId: string;
@@ -13,6 +15,7 @@ export type CreateOrderInput = {
   inputs: Prisma.InputJsonValue;
   ip: string;
   host: string;
+  error?: string | null;
 };
 
 export const normalizeProtocolValue = (protocol: unknown): string | null => {
@@ -54,6 +57,7 @@ export const normalizeProtocolValue = (protocol: unknown): string | null => {
 export const createOrder = (data: CreateOrderInput) =>
   prisma.order.create({
     data: {
+      ...(data.id ? { id: data.id } : {}),
       user_id: data.userId,
       user_name: data.userName,
       company_id: data.companyId,
@@ -76,6 +80,7 @@ export const finishOrder = (
   duration: number,
   status: "SUCCESS" | "FAILED",
   protocol?: string | null,
+  error?: string | null,
 ) => {
   const normalizedProtocol = normalizeProtocolValue(protocol);
 
@@ -85,9 +90,46 @@ export const finishOrder = (
       duration,
       status,
       ...(protocol !== undefined ? { protocol: normalizedProtocol } : {}),
+      ...(error !== undefined ? { error: error?.trim() ? error : null } : {}),
     },
   });
 };
+
+type OrderWriteJob =
+  | { type: "CREATE"; data: CreateOrderInput }
+  | {
+      type: "FINISH";
+      id: string;
+      duration: number;
+      status: "SUCCESS" | "FAILED";
+      protocol?: string | null;
+      error?: string | null;
+    };
+
+const orderWriteQueue = createBackgroundQueue(async (job: OrderWriteJob) => {
+  if (job.type === "CREATE") {
+    await createOrder(job.data);
+    return;
+  }
+
+  await finishOrder(job.id, job.duration, job.status, job.protocol, job.error);
+});
+
+export const enqueueCreateOrder = (id: string, data: CreateOrderInput) => {
+  orderWriteQueue.enqueue({ type: "CREATE", data: { ...data, id } });
+};
+
+export const enqueueFinishOrder = (
+  id: string,
+  duration: number,
+  status: "SUCCESS" | "FAILED",
+  protocol?: string | null,
+  error?: string | null,
+) => {
+  orderWriteQueue.enqueue({ type: "FINISH", id, duration, status, protocol, error });
+};
+
+export const flushOrderWriteQueue = () => orderWriteQueue.flush();
 
 export const listOrders = (input: {
   page: number;

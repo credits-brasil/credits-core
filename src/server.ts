@@ -14,6 +14,9 @@ import { adminRoutes } from "./routes/admin.routes";
 import { orderRoutes } from "./routes/order.routes";
 import { platformLogRoutes } from "./routes/platform-log.routes";
 import { registerPlatformAudit } from "./hooks/platform-audit";
+import { flushPlatformLogQueue } from "./repositories/platform-log.repository";
+import { flushOrderWriteQueue } from "./repositories/order.repository";
+import { flushSpcOrderSnapshotQueue } from "./repositories/spc-order-persistence.repository";
 
 const server: FastifyInstance = Fastify({
   logger: true,
@@ -36,6 +39,22 @@ server.register(spcRoutes);
 server.register(adminRoutes);
 server.register(orderRoutes);
 server.register(platformLogRoutes);
+
+server.addHook("onResponse", (_request, _reply, done) => {
+  setImmediate(() => {
+    void Promise.all([flushOrderWriteQueue(), flushSpcOrderSnapshotQueue()]).catch((error) => {
+      server.log.error({ err: error }, "Failed to flush background persistence queues");
+    });
+  });
+
+  done();
+});
+
+server.addHook("onClose", async () => {
+  await flushPlatformLogQueue();
+  await flushOrderWriteQueue();
+  await flushSpcOrderSnapshotQueue();
+});
 
 const PORT = Number(process.env.PORT ?? 3000);
 

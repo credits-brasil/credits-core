@@ -1,11 +1,8 @@
-import axios from "axios";
-import { parseStringPromise } from "xml2js";
-
 import { AppError } from "@/constants/spc";
+import { randomUUID } from "node:crypto";
 
-import { buildSPCSoapBody, FriendlyError, getTipoConsumidor } from "@/utils";
+import { FriendlyError, getTipoConsumidor } from "@/utils";
 
-import { SoapEnvelope } from "@/interfaces";
 import { get3082SPCObitoInput } from "@/utils/inputs/get-3082-spc-obito.input";
 import { get5268ValidaCelularInput } from "@/utils/inputs/get-5268-valida-celular.input";
 import { HTTPSPCService } from "@/services";
@@ -80,8 +77,11 @@ import { get5255PEPInput } from "@/utils/inputs/get-5255-insumo-pep.input";
 import { get5264AlertaCPFSuspeitoInput } from "@/utils/inputs/get-5264-insumo_alerta-cpf-suspeito.input";
 import { get5239ClassificacaoRiscoDebitosAtivosInput } from "@/utils/inputs/get-5239-insumo-classificacao-risco-debitos-ativos.input";
 import { get5122RendaPresumidaSPCInput } from "@/utils/inputs/get-5122-renda-presumida-spc.input";
-import { createOrder, finishOrder } from "@/repositories/order.repository";
-import { saveSpcOrderSnapshot } from "@/repositories/spc-order-persistence.repository";
+import { enqueueCreateOrder, enqueueFinishOrder } from "@/repositories/order.repository";
+import {
+  enqueueSpcOrderSnapshot,
+  enqueueSpcOrderSnapshotFallback,
+} from "@/repositories/spc-order-persistence.repository";
 
 export async function spc325UseCase(
   document: string,
@@ -99,7 +99,10 @@ export async function spc325UseCase(
 ) {
   console.log(insumos, "Insumos recebidos no use-case");
 
-  const order = await createOrder({
+  const orderId = randomUUID();
+  const startedAt = Date.now();
+
+  enqueueCreateOrder(orderId, {
     userId: audit.userId,
     userName: audit.userName,
     companyId: audit.companyId,
@@ -111,8 +114,9 @@ export async function spc325UseCase(
     ip: audit.ip,
     host: audit.host,
   });
-  
-  const startedAt = Date.now();
+
+  let xml = "";
+  let json: any = null;
 
   try {
     const allowedInsumos: Record<"CPF" | "CNPJ", string[]> = {
@@ -197,12 +201,15 @@ export async function spc325UseCase(
       });
     }
 
-    const { xml, json } = await HTTPSPCService({
+    const response = await HTTPSPCService({
       productCode: 325,
       tipoConsumidor: getTipoConsumidor(typeDocument),
       document,
       insumos,
     });
+
+    xml = response.xml;
+    json = response.json;
 
     // console.log(xml, "XML recebido do serviço SPC");
 
@@ -271,9 +278,9 @@ export async function spc325UseCase(
             //   ),
 
             // 22
-            // contumacia: get22ContumaciaInput(
-            //   json["S:Envelope"]["S:Body"]["ns2:resultado"]["contumacia"],
-            // ),
+            contumacia: get22ContumaciaInput(
+              json["S:Envelope"]["S:Body"]["ns2:resultado"]["contumacia"],
+            ),
 
             // 20
             "credito-concedido": get20CreditoConcedidoInput(
@@ -729,9 +736,9 @@ export async function spc325UseCase(
             //   ),
 
             // 22
-            // contumacia: get22ContumaciaInput(
-            //   json["S:Envelope"]["S:Body"]["ns2:resultado"]["contumacia"],
-            // ),
+            contumacia: get22ContumaciaInput(
+              json["S:Envelope"]["S:Body"]["ns2:resultado"]["contumacia"],
+            ),
 
             // 20
             "credito-concedido": get20CreditoConcedidoInput(
@@ -1083,8 +1090,8 @@ export async function spc325UseCase(
 
     const protocol = result.protocolo ?? null;
 
-    await saveSpcOrderSnapshot({
-      orderId: order.id,
+    enqueueSpcOrderSnapshot({
+      orderId,
       document,
       typeDocument,
       insumos,
@@ -1093,11 +1100,30 @@ export async function spc325UseCase(
       result,
     });
 
-    await finishOrder(order.id, Date.now() - startedAt, "SUCCESS", protocol);
+    enqueueFinishOrder(orderId, Date.now() - startedAt, "SUCCESS", protocol);
 
     return result;
   } catch (error) {
-    await finishOrder(order.id, Date.now() - startedAt, "FAILED");
+    const failureMessage = error instanceof Error ? error.message : String(error);
+
+    enqueueSpcOrderSnapshotFallback({
+      orderId,
+      document,
+      typeDocument,
+      insumos,
+      xml,
+      json,
+      result: null,
+      error: failureMessage,
+    });
+
+    enqueueFinishOrder(
+      orderId,
+      Date.now() - startedAt,
+      "FAILED",
+      undefined,
+      failureMessage,
+    );
 
     if (error instanceof FriendlyError) {
       throw error;

@@ -47,8 +47,16 @@ export const orderListController = async (
         inputCodes,
       );
 
+      const resultError =
+        typeof order.error === "string" && order.error.trim().length > 0
+          ? order.error
+          : typeof snapshot?.result === "object" && snapshot.result !== null && "error" in snapshot.result
+            ? String((snapshot.result as { error?: unknown }).error ?? "")
+            : null;
+
       return {
         ...order,
+        error: resultError,
         xml: snapshot?.xml ?? null,
         result: snapshot?.result ?? null,
         json: snapshot?.json ?? null,
