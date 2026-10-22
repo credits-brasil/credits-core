@@ -10,38 +10,9 @@ phases:
     runtime-versions:
       nodejs: 24
     commands:
-      - echo "Instalando dependências..."
-      - npm ci --include=dev
+      - npm i
 
   build:
     commands:
-      - echo "Gerando Prisma Client..."
-      - npx prisma generate
-
-      - echo "Compilando aplicação TypeScript..."
+      - npm run test
       - npm run build
-
-      - echo "Validando arquivos obrigatórios..."
-      - test -f dist/server.js
-      - test -f package.json
-      - test -f package-lock.json
-      - test -f Procfile
-
-      - echo "Compilação concluída com sucesso!"
-
-  post_build:
-    commands:
-      - echo "Preparando pacote para o Elastic Beanstalk..."
-      - echo "Arquivos compilados e validados."
-      - echo "Build finalizado com sucesso!"
-
-artifacts:
-  base-directory: .
-  files:
-    - 'dist/**/*'
-    - 'prisma/**/*'
-    - 'prisma.config.ts'
-    - 'package.json'
-    - 'package-lock.json'
-    - 'Procfile'
-  discard-paths: no

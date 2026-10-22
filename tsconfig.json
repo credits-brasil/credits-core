@@ -14,5 +14,5 @@
     },
   },
   "include": ["src/**/*.ts", "fastify-multer.d.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "src/**/*.test.ts", "src/**/*.spec.ts"]
 }
