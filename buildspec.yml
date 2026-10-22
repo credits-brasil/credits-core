@@ -1,4 +1,3 @@
-
 version: 0.2
 
 env:
@@ -10,9 +9,17 @@ phases:
     runtime-versions:
       nodejs: 24
     commands:
-      - npm i
+      - npm ci
 
   build:
     commands:
       - npm run test
       - npm run build
+
+artifacts:
+  files:
+    - '**/*'
+  exclude-paths:
+    - 'node_modules/**/*'
+    - '.git/**/*'
+  discard-paths: no
