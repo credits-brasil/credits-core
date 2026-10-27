@@ -136,10 +136,12 @@ export const listOrders = (input: {
   pageSize: number;
   search?: string;
   status?: "PROCESS" | "SUCCESS" | "FAILED";
+  companyId?: string;
 }) => {
   const search = input.search?.trim();
   const where = {
     ...(input.status ? { status: input.status } : {}),
+    ...(input.companyId ? { company_id: input.companyId } : {}),
     ...(search
       ? {
           OR: [
