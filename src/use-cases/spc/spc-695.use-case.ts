@@ -71,12 +71,26 @@ export async function spc695UseCase(
   document: string,
   typeDocument: "CPF" | "CNPJ",
   insumos: number[],
-  audit: { userId: string; userName: string; companyId: string; companyName: string; ip: string; host: string },
+  audit: {
+    userId: string;
+    userName: string;
+    companyId: string;
+    companyName: string;
+    ip: string;
+    host: string;
+  },
 ) {
   const order = await createOrder({
-    userId: audit.userId, userName: audit.userName, companyId: audit.companyId,
-    companyName: audit.companyName, productName: "695-spc-mais",
-    typeDocument, document, inputs: insumos, ip: audit.ip, host: audit.host,
+    userId: audit.userId,
+    userName: audit.userName,
+    companyId: audit.companyId,
+    companyName: audit.companyName,
+    productName: "695-spc-mais",
+    typeDocument,
+    document,
+    inputs: insumos,
+    ip: audit.ip,
+    host: audit.host,
   });
   const startedAt = Date.now();
 
@@ -153,7 +167,7 @@ export async function spc695UseCase(
               typeDocument,
             ),
 
-             "spc-score-12-meses": convertSPCInput(
+            "spc-score-12-meses": convertSPCInput(
               get78SPCScore12MesesInput,
               resultado["spc-score-12-meses"],
             ),
@@ -387,6 +401,11 @@ export async function spc695UseCase(
               get44TelefoneVinculadoAssinanteConsultadoInput,
               resultado["telefone-vinculado-assinante-consultado"],
             ),
+
+            "mensagem-complemento":
+              json["S:Envelope"]["S:Body"]["ns2:resultado"][
+                "mensagem-complemento"
+              ] ?? "",
 
             ...(insumos.includes(5244) && {
               "divida-publica-cadin": convertSPCInput(

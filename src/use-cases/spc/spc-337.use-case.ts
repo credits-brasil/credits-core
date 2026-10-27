@@ -52,12 +52,26 @@ export async function spc337UseCase(
   document: string,
   typeDocument: "CPF" | "CNPJ",
   insumos: number[],
-  audit: { userId: string; userName: string; companyId: string; companyName: string; ip: string; host: string },
+  audit: {
+    userId: string;
+    userName: string;
+    companyId: string;
+    companyName: string;
+    ip: string;
+    host: string;
+  },
 ) {
   const order = await createOrder({
-    userId: audit.userId, userName: audit.userName, companyId: audit.companyId,
-    companyName: audit.companyName, productName: "337-spc-relatorio",
-    typeDocument, document, inputs: insumos, ip: audit.ip, host: audit.host,
+    userId: audit.userId,
+    userName: audit.userName,
+    companyId: audit.companyId,
+    companyName: audit.companyName,
+    productName: "337-spc-relatorio",
+    typeDocument,
+    document,
+    inputs: insumos,
+    ip: audit.ip,
+    host: audit.host,
   });
   const startedAt = Date.now();
 
@@ -86,6 +100,8 @@ export async function spc337UseCase(
       document,
       insumos,
     });
+
+    console.log(xml, "XML");
 
     const result = {
       protocolo: json["S:Envelope"]["S:Body"]["ns2:resultado"].protocolo?.$,
@@ -209,6 +225,26 @@ export async function spc337UseCase(
             "telefone-vinculado-assinante-consultado"
           ],
         ),
+
+      "mensagem-complementar": (Array.isArray(
+        json["S:Envelope"]["S:Body"]["ns2:resultado"]["mensagem-complementar"],
+      )
+        ? json["S:Envelope"]["S:Body"]["ns2:resultado"]["mensagem-complementar"]
+        : json["S:Envelope"]["S:Body"]["ns2:resultado"]["mensagem-complementar"]
+          ? [
+              json["S:Envelope"]["S:Body"]["ns2:resultado"][
+                "mensagem-complementar"
+              ],
+            ]
+          : []
+      ).map((item) => ({
+        origem: item.$?.origem ?? "",
+        mensagem: item.mensagem ?? "",
+      })),
+
+      "mensagem-complemento":
+        json["S:Envelope"]["S:Body"]["ns2:resultado"]["mensagem-complemento"] ??
+        "",
 
       // 51
 
@@ -442,6 +478,9 @@ export async function spc337UseCase(
     });
 
     await finishOrder(order.id, Date.now() - startedAt, "SUCCESS", protocol);
+
+    console.log(result, "RESULT");
+
     return result;
   } catch (error) {
     await finishOrder(order.id, Date.now() - startedAt, "FAILED");

@@ -49,50 +49,36 @@ export async function spc323UseCase(
   document: string,
   typeDocument: "CPF" | "CNPJ",
   insumos: number[],
-  audit: { userId: string; userName: string; companyId: string; companyName: string; ip: string; host: string },
+  audit: {
+    userId: string;
+    userName: string;
+    companyId: string;
+    companyName: string;
+    ip: string;
+    host: string;
+  },
 ) {
   const order = await createOrder({
-    userId: audit.userId, userName: audit.userName, companyId: audit.companyId,
-    companyName: audit.companyName, productName: "323-spc-mix-mais",
-    typeDocument, document, inputs: insumos, ip: audit.ip, host: audit.host,
+    userId: audit.userId,
+    userName: audit.userName,
+    companyId: audit.companyId,
+    companyName: audit.companyName,
+    productName: "323-spc-mix-mais",
+    typeDocument,
+    document,
+    inputs: insumos,
+    ip: audit.ip,
+    host: audit.host,
   });
   const startedAt = Date.now();
 
   const allowedInsumos: Record<"CPF" | "CNPJ", number[]> = {
     CPF: [
-      5180,
-      5262,
-      5195,
-      5194,
-      5241,
-      5224,
-      5227,
-      5190,
-      5228,
-      78,
-      77,
-      5268,
-      5239,
-      5122,
-      5142,
-      5256,
-      5257,
-      5264,
+      5180, 5262, 5195, 5194, 5241, 5224, 5227, 5190, 5228, 78, 77, 5268, 5239,
+      5122, 5142, 5256, 5257, 5264,
     ],
     CNPJ: [
-      5244,
-      5178,
-      5185,
-      5241,
-      5224,
-      5227,
-      5184,
-      5228,
-      5229,
-      78,
-      77,
-      5256,
-      5257,
+      5244, 5178, 5185, 5241, 5224, 5227, 5184, 5228, 5229, 78, 77, 5256, 5257,
     ],
   };
 
@@ -136,9 +122,7 @@ export async function spc323UseCase(
         ),
 
         // 48
-        "capital-social": get48CapitalSocialInput(
-          resultado["capital-social"],
-        ),
+        "capital-social": get48CapitalSocialInput(resultado["capital-social"]),
 
         // 2
         "grafia-pj": get2GrafiaPJInput(resultado["grafia-pj"]),
@@ -253,6 +237,10 @@ export async function spc323UseCase(
           "ultimo-telefone-informado"
         ],
       ),
+
+      "mensagem-complemento":
+        json["S:Envelope"]["S:Body"]["ns2:resultado"]["mensagem-complemento"] ??
+        "",
 
       // OPICIONAL
 

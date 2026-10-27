@@ -77,7 +77,10 @@ import { get5255PEPInput } from "@/utils/inputs/get-5255-insumo-pep.input";
 import { get5264AlertaCPFSuspeitoInput } from "@/utils/inputs/get-5264-insumo_alerta-cpf-suspeito.input";
 import { get5239ClassificacaoRiscoDebitosAtivosInput } from "@/utils/inputs/get-5239-insumo-classificacao-risco-debitos-ativos.input";
 import { get5122RendaPresumidaSPCInput } from "@/utils/inputs/get-5122-renda-presumida-spc.input";
-import { enqueueCreateOrder, enqueueFinishOrder } from "@/repositories/order.repository";
+import {
+  enqueueCreateOrder,
+  enqueueFinishOrder,
+} from "@/repositories/order.repository";
 import {
   enqueueSpcOrderSnapshot,
   enqueueSpcOrderSnapshotFallback,
@@ -211,7 +214,7 @@ export async function spc325UseCase(
     xml = response.xml;
     json = response.json;
 
-    // console.log(xml, "XML recebido do serviço SPC");
+    console.log(xml, "XML recebido do serviço SPC");
 
     const result =
       typeDocument === "CPF"
@@ -826,6 +829,11 @@ export async function spc325UseCase(
             //   ],
             // ),
 
+            "mensagem-complemento":
+              json["S:Envelope"]["S:Body"]["ns2:resultado"][
+                "mensagem-complemento"
+              ] ?? "",
+
             // OPCIONAL
 
             // 5244
@@ -1102,9 +1110,12 @@ export async function spc325UseCase(
 
     enqueueFinishOrder(orderId, Date.now() - startedAt, "SUCCESS", protocol);
 
+    console.log(result, "Resultado final do use-case SPC 325");
+
     return result;
   } catch (error) {
-    const failureMessage = error instanceof Error ? error.message : String(error);
+    const failureMessage =
+      error instanceof Error ? error.message : String(error);
 
     enqueueSpcOrderSnapshotFallback({
       orderId,
