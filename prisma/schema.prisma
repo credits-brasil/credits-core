@@ -25,24 +25,25 @@ model Admin {
 }
 
 model Order {
-  id           String       @id @default(uuid())
-  user_id      String
-  user_name    String
-  company_id   String
-  company_name String
-  product_name String
-  protocol     String?
-  typeDocument TypeDocument
-  document     String
-  duration     Int
-  inputs       Json
-  origin       TypeOrigin
-  ip           String
-  host         String
-  status       StatusOrder   @default(PROCESS)
-  error        String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id               String       @id @default(uuid())
+  user_id          String
+  user_name        String
+  company_id       String
+  company_name     String
+  company_document String
+  product_name     String
+  protocol         String?
+  typeDocument     TypeDocument
+  document         String
+  duration         Int
+  inputs           Json
+  origin           TypeOrigin
+  ip               String
+  host             String
+  status           StatusOrder   @default(PROCESS)
+  error            String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   @@index([protocol])
   @@map("orders")
