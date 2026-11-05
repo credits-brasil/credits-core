@@ -91,7 +91,7 @@ export const createOrder = (data: CreateOrderInput) =>
 
     if (isConsultationLimitReached(company.limit_consults_daily, dailyCount)) {
       throw new FriendlyError({
-        message: "Limite diário de consultas desta empresa atingido.",
+        message: "Limite de consultas atingido.",
         context: "order.create.daily-limit",
         code: 429,
       });
@@ -99,7 +99,7 @@ export const createOrder = (data: CreateOrderInput) =>
 
     if (isConsultationLimitReached(company.limit_consults_monthly, monthlyCount)) {
       throw new FriendlyError({
-        message: "Limite mensal de consultas desta empresa atingido.",
+        message: "Limite de consultas atingido.",
         context: "order.create.monthly-limit",
         code: 429,
       });
