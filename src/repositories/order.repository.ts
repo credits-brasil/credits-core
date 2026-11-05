@@ -68,6 +68,7 @@ export const createOrder = (data: CreateOrderInput) =>
     const company = await transaction.company.findUnique({
       where: { id: data.companyId },
       select: {
+        cnpj: true,
         limit_consults_daily: true,
         limit_consults_monthly: true,
       },
@@ -112,6 +113,7 @@ export const createOrder = (data: CreateOrderInput) =>
         user_name: data.userName,
         company_id: data.companyId,
         company_name: data.companyName,
+        company_document: company.cnpj,
         product_name: data.productName,
         protocol: normalizeProtocolValue(data.protocol),
         typeDocument: data.typeDocument,
