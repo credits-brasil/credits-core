@@ -12,6 +12,7 @@ export const orderListController = async (
       pageSize?: string;
       search?: string;
       status?: "PROCESS" | "SUCCESS" | "FAILED";
+      companyId?: string;
     };
   }>,
   reply: FastifyReply,
@@ -25,6 +26,7 @@ export const orderListController = async (
     pageSize,
     search: request.query.search,
     status: request.query.status,
+    companyId: request.query.companyId,
   });
 
   const snapshots = await findSpcOrderSnapshotsByOrderIds(

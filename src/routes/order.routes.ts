@@ -9,6 +9,7 @@ export async function orderRoutes(server: FastifyInstance) {
       pageSize?: string;
       search?: string;
       status?: "PROCESS" | "SUCCESS" | "FAILED";
+      companyId?: string;
     };
   }>("/api/orders", orderListController);
 }
