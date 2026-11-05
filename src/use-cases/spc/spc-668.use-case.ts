@@ -48,15 +48,15 @@ export async function spc668UseCase(
   document: string,
   typeDocument: "CPF" | "CNPJ",
   insumos: number[],
-  audit: { userId: string; userName: string; companyId: string; companyName: string; ip: string; host: string },
+  audit: {
+    userId: string;
+    userName: string;
+    companyId: string;
+    companyName: string;
+    ip: string;
+    host: string;
+  },
 ) {
-  const order = await createOrder({
-    userId: audit.userId, userName: audit.userName, companyId: audit.companyId,
-    companyName: audit.companyName, productName: "668-spc-avancada-pj",
-    typeDocument, document, inputs: insumos, ip: audit.ip, host: audit.host,
-  });
-  const startedAt = Date.now();
-
   const allowedInsumos = new Set([
     18, 49, 5244, 5178, 5241, 5224, 5226, 5227, 5193, 5263, 5257, 5260, 5240,
     5256, 5265, 5179, 5225, 24, 5258, 5186, 5267, 5184, 5229, 5247, 5245, 23,
@@ -74,6 +74,20 @@ export async function spc668UseCase(
       code: 400,
     });
   }
+
+  const order = await createOrder({
+    userId: audit.userId,
+    userName: audit.userName,
+    companyId: audit.companyId,
+    companyName: audit.companyName,
+    productName: "668-spc-avancada-pj",
+    typeDocument,
+    document,
+    inputs: insumos,
+    ip: audit.ip,
+    host: audit.host,
+  });
+  const startedAt = Date.now();
 
   try {
     const { xml, json } = await HTTPSPCService({
@@ -149,6 +163,10 @@ export async function spc668UseCase(
       "spc-score-12-meses": get78SPCScore12MesesInput(
         json["S:Envelope"]["S:Body"]["ns2:resultado"]["spc-score-12-meses"],
       ),
+
+      "mensagem-complemento":
+        json["S:Envelope"]["S:Body"]["ns2:resultado"]["mensagem-complemento"] ??
+        "",
 
       // OPCIONAL
 

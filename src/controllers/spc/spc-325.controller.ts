@@ -19,14 +19,20 @@ export const spc325Controller = async (
   }>,
   reply: FastifyReply,
 ) => {
+  const controllerStartedAt = Date.now();
+
+
   const { document, typeDocument, insumos, companyId } = request.body;
 
+  const authStartedAt = Date.now();
   const authenticatedUser = await requireUserCompany(request, reply, companyId);
   if (!authenticatedUser) return;
+  const authMs = Date.now() - authStartedAt;
 
   const spcUseCases = new SPCUseCases();
 
   try {
+    const useCaseStartedAt = Date.now();
     const spc = await spcUseCases.spc325(document, typeDocument, insumos, {
       userId: authenticatedUser.id,
       userName: authenticatedUser.name,
@@ -36,6 +42,13 @@ export const spc325Controller = async (
       ip: request.ip,
       host: request.headers.host ?? "",
     });
+    const useCaseMs = Date.now() - useCaseStartedAt;
+
+    request.log.info({
+      authMs,
+      useCaseMs,
+      controllerMs: Date.now() - controllerStartedAt,
+    }, "SPC 325 request timing");
 
     return reply
       .code(200)

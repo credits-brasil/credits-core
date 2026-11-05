@@ -1,3 +1,31 @@
+const normalizeSecondaryActivities = (
+  value?:
+    | {
+        $?: {
+          descricao?: string;
+          codigo?: string;
+        };
+      }
+    | {
+        $?: {
+          descricao?: string;
+          codigo?: string;
+        };
+      }[]
+    | null,
+) => {
+  if (!value) {
+    return [];
+  }
+
+  const items = Array.isArray(value) ? value : [value];
+
+  return items.map((item) => ({
+    description: item?.$?.descricao,
+    code: item?.$?.codigo,
+  }));
+};
+
 export const get64AtividadeEmpresaInput = (atividadeEmpresa: {
   "detalhe-atividade-empresa"?: {
     "ramo-atividade"?: {
@@ -6,12 +34,20 @@ export const get64AtividadeEmpresaInput = (atividadeEmpresa: {
         codigo?: string;
       };
     };
-    "atividades-economicas-secundarias"?: {
-      $?: {
-        descricao?: string;
-        codigo?: string;
-      };
-    }[];
+    "atividades-economicas-secundarias"?:
+      | {
+          $?: {
+            descricao?: string;
+            codigo?: string;
+          };
+        }
+      | {
+          $?: {
+            descricao?: string;
+            codigo?: string;
+          };
+        }[]
+      | null;
   };
 }): {
   "detalhe-atividade-empresa": {
@@ -33,12 +69,10 @@ export const get64AtividadeEmpresaInput = (atividadeEmpresa: {
       code: atividadeEmpresa?.["detalhe-atividade-empresa"]?.["ramo-atividade"]
         ?.$?.codigo,
     },
-    "atividades-economicas-secundarias":
+    "atividades-economicas-secundarias": normalizeSecondaryActivities(
       atividadeEmpresa?.["detalhe-atividade-empresa"]?.[
         "atividades-economicas-secundarias"
-      ]?.map((i) => ({
-        description: i.$?.descricao,
-        code: i.$?.codigo,
-      })) ?? [],
+      ],
+    ),
   },
 });

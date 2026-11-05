@@ -1,18 +1,19 @@
 version: 0.2
 
+env:
+  variables:
+    CI: "true"
+
 phases:
   install:
     runtime-versions:
-      nodejs: 22
+      nodejs: 24
     commands:
-      - npm ci
-
-  # pre_build:
-  #   commands:
-  #     - npm run test
+      - npm i
 
   build:
     commands:
+      - npm run test
       - npm run build
 
 artifacts:
@@ -21,3 +22,4 @@ artifacts:
   exclude-paths:
     - 'node_modules/**/*'
     - '.git/**/*'
+  discard-paths: no

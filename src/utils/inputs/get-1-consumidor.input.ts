@@ -1,3 +1,31 @@
+const normalizeSecondaryActivities = (
+  value?:
+    | {
+        $?: {
+          descricao?: string;
+          codigo?: string;
+        };
+      }
+    | {
+        $?: {
+          descricao?: string;
+          codigo?: string;
+        };
+      }[]
+    | null,
+) => {
+  if (!value) {
+    return [];
+  }
+
+  const items = Array.isArray(value) ? value : [value];
+
+  return items.map((item) => ({
+    description: item?.$?.descricao,
+    code: item?.$?.codigo,
+  }));
+};
+
 export const get1ConsumidorInput = (
   consumidor: {
     "consumidor-pessoa-juridica"?: {
@@ -55,12 +83,20 @@ export const get1ConsumidorInput = (
           codigo?: string;
         };
       };
-      "atividade-economica-secundaria"?: {
-        $?: {
-          descricao?: string;
-          codigo?: string;
-        };
-      }[];
+      "atividade-economica-secundaria"?:
+        | {
+            $?: {
+              descricao?: string;
+              codigo?: string;
+            };
+          }
+        | {
+            $?: {
+              descricao?: string;
+              codigo?: string;
+            };
+          }[]
+        | null;
     };
 
     "consumidor-pessoa-fisica"?: {
@@ -192,13 +228,11 @@ export const get1ConsumidorInput = (
         ]?.$?.codigo,
       },
 
-      "atividade-economica-secundaria":
+      "atividade-economica-secundaria": normalizeSecondaryActivities(
         consumidor?.["consumidor-pessoa-juridica"]?.[
           "atividade-economica-secundaria"
-        ]?.map((i) => ({
-          description: i.$?.descricao,
-          code: i.$?.codigo,
-        })) ?? [],
+        ],
+      ),
     };
   }
 

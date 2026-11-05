@@ -47,21 +47,59 @@ export type PlatformLogEntry = {
 };
 
 let mongoClient: MongoClient | null = null;
+const platformLogQueue: PlatformLogEntry[] = [];
+let isPlatformLogQueueFlushing = false;
+let platformLogFlushTimer: NodeJS.Timeout | null = null;
 
-const getMongoUri = () => {
-  return process.env.MONGODB_URI ?? process.env.SPC_MONGO_URI ?? "";
+const maskMongoUri = (uri: string | null | undefined) => {
+  if (!uri) {
+    return "none";
+  }
+
+  return uri.replace(/(:\/\/)([^:@/]+)(:[^@/]*)(@)/, "$1***$3$4");
 };
 
-const getMongoClientOptions = (uri: string) => {
-  const useTls = /mongodb\+srv:|tls=true|ssl=true|mongodb\.net/i.test(uri) || process.env.MONGODB_TLS === "true";
-  const allowInvalidCertificates = process.env.MONGODB_TLS_ALLOW_INVALID_CERTS === "true";
+export const describeMongoFailure = (error: unknown, context: string) => {
+  const mongoError = error as any;
+  const name = String(mongoError?.name ?? "UnknownError");
+  const code = String(mongoError?.code ?? "N/A");
+  const message = String(mongoError?.message ?? error ?? "Unknown Mongo error");
+  const uri = getMongoUri();
+  const dbName = "credits";
+  const collectionName = "platform_logs";
+  const tlsEnabled = Boolean(uri ? getMongoClientOptions(uri).tls : false);
+
+  return `${context}. uri=${maskMongoUri(uri)}; db=${dbName}; collection=${collectionName}; tls=${tlsEnabled}; name=${name}; code=${code}; message=${message}`;
+};
+
+const getMongoUri = () => {
+  return process.env.MONGODB_URI ?? "";
+};
+
+const getEffectiveMongoTlsSetting = (uri: string) => {
+  const explicitTlsEnabled = /(?:^|[?&])(tls|ssl)=true/i.test(uri);
+  const explicitTlsDisabled = /(?:^|[?&])(tls|ssl)=false/i.test(uri);
+
+  if (explicitTlsDisabled) {
+    return false;
+  }
+
+  if (explicitTlsEnabled) {
+    return true;
+  }
+
+  return false;
+};
+
+export const getMongoClientOptions = (uri: string) => {
+  const useTls = getEffectiveMongoTlsSetting(uri);
 
   return {
     ...(useTls ? { tls: true } : {}),
-    ...(allowInvalidCertificates ? { tlsAllowInvalidCertificates: true } : {}),
-    authSource: process.env.MONGODB_AUTH_SOURCE ?? "admin",
     retryWrites: true,
-    serverSelectionTimeoutMS: 20000,
+    connectTimeoutMS: 30000,
+    serverSelectionTimeoutMS: 30000,
+    socketTimeoutMS: 30000,
     maxPoolSize: 5,
   };
 };
@@ -119,16 +157,14 @@ const getMongoCollection = async () => {
   try {
     const client = await ensureMongoClient(uri);
 
-    const dbName = process.env.MONGODB_NAME ?? "credits";
-    const collectionName = process.env.MONGODB_LOGS_COLLECTION ?? "platform_logs";
-
-    return client.db(dbName).collection(collectionName);
+    return client.db("credits").collection("platform_logs");
   } catch (error) {
     if (isMongoConnectionError(error)) {
-      console.warn("Mongo audit collection unavailable; skipping platform log save.");
+      console.warn(describeMongoFailure(error, "Mongo audit collection unavailable; skipping platform log save."));
       return null;
     }
 
+    console.error(describeMongoFailure(error, "Mongo audit collection failed with a non-network error."));
     throw error;
   }
 };
@@ -181,13 +217,69 @@ export const normalizePlatformLogEntry = (input: PlatformLogEntryInput) => {
   };
 };
 
-export const savePlatformLog = async (input: PlatformLogEntryInput) => {
-  const collection = await getMongoCollection();
+const enqueuePlatformLogDocument = (document: PlatformLogEntry) => {
+  platformLogQueue.push(document);
 
-  if (!collection) {
-    return null;
+  if (!platformLogFlushTimer) {
+    const flushIntervalMs = Math.max(1000, Number(process.env.PLATFORM_LOG_FLUSH_INTERVAL_MS ?? 2000));
+    platformLogFlushTimer = setInterval(() => {
+      void flushPlatformLogQueue();
+    }, flushIntervalMs);
+
+    if (typeof platformLogFlushTimer.unref === "function") {
+      platformLogFlushTimer.unref();
+    }
+  }
+};
+
+export const getPlatformLogQueueDepth = () => platformLogQueue.length;
+
+export const flushPlatformLogQueue = async () => {
+  if (isPlatformLogQueueFlushing || platformLogQueue.length === 0) {
+    return 0;
   }
 
+  isPlatformLogQueueFlushing = true;
+  let batch: PlatformLogEntry[] = [];
+
+  try {
+    const collection = await getMongoCollection();
+    const batchSize = Math.max(1, Number(process.env.PLATFORM_LOG_BATCH_SIZE ?? 25));
+    batch = platformLogQueue.splice(0, batchSize);
+
+    if (batch.length === 0) {
+      return 0;
+    }
+
+    if (!collection) {
+      platformLogQueue.unshift(...batch);
+      return 0;
+    }
+
+    await collection.insertMany(batch as any);
+    return batch.length;
+  } catch (error) {
+    const errorName = (error as any)?.name;
+
+    if (isMongoConnectionError(error) || errorName === "MongoTopologyClosedError" || errorName === "MongoNotConnectedError") {
+      console.warn(describeMongoFailure(error, "Platform audit queue paused until Mongo reconnects."));
+      platformLogQueue.unshift(...batch);
+      return 0;
+    }
+
+    console.error(describeMongoFailure(error, "Platform audit queue insert failed with a non-network error."));
+    throw error;
+  } finally {
+    isPlatformLogQueueFlushing = false;
+
+    if (platformLogQueue.length === 0 && platformLogFlushTimer) {
+      clearInterval(platformLogFlushTimer);
+      platformLogFlushTimer = null;
+    }
+  }
+};
+
+export const savePlatformLog = async (input: PlatformLogEntryInput) => {
   const normalized = normalizePlatformLogEntry(input);
   const now = new Date();
   const document = {
@@ -195,41 +287,10 @@ export const savePlatformLog = async (input: PlatformLogEntryInput) => {
     ...normalized,
     createdAt: now,
     updatedAt: now,
-  };
+  } as PlatformLogEntry;
 
-  try {
-    await collection.insertOne(document as any);
-    return document as PlatformLogEntry;
-  } catch (error) {
-    const errorName = (error as any)?.name;
-
-    if (!isMongoConnectionError(error) && errorName !== "MongoTopologyClosedError" && errorName !== "MongoNotConnectedError") {
-      throw error;
-    }
-
-    try {
-      const uri = getMongoUri();
-
-      if (!uri) {
-        return null;
-      }
-
-      const reconnectClient = await ensureMongoClient(uri);
-      const dbName = process.env.MONGODB_NAME ?? "credits";
-      const collectionName = process.env.MONGODB_LOGS_COLLECTION ?? "platform_logs";
-      const retryCollection = reconnectClient.db(dbName).collection(collectionName);
-
-      await retryCollection.insertOne(document as any);
-      return document as PlatformLogEntry;
-    } catch (retryError) {
-      if (isMongoConnectionError(retryError)) {
-        console.warn("Platform audit log skipped due to Mongo connectivity failure.");
-        return null;
-      }
-
-      throw retryError;
-    }
-  }
+  enqueuePlatformLogDocument(document);
+  return document;
 };
 
 export const paginatePlatformLogs = ({
