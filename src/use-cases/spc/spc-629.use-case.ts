@@ -59,20 +59,6 @@ export async function spc629UseCase(
     host: string;
   },
 ) {
-  const order = await createOrder({
-    userId: audit.userId,
-    userName: audit.userName,
-    companyId: audit.companyId,
-    companyName: audit.companyName,
-    productName: "629-spc-positivo-intermediario-pj",
-    typeDocument,
-    document,
-    inputs: insumos,
-    ip: audit.ip,
-    host: audit.host,
-  });
-  const startedAt = Date.now();
-
   const allowedInsumos = new Set([
     18, 5244, 5178, 5185, 5241, 5226, 5193, 5263, 5257, 5260, 5240, 5265, 5179,
     5225, 24, 5258, 5186, 5267, 5184, 5229, 5247, 5245, 77, 5183,
@@ -89,6 +75,20 @@ export async function spc629UseCase(
       code: 400,
     });
   }
+
+  const order = await createOrder({
+    userId: audit.userId,
+    userName: audit.userName,
+    companyId: audit.companyId,
+    companyName: audit.companyName,
+    productName: "629-spc-positivo-intermediario-pj",
+    typeDocument,
+    document,
+    inputs: insumos,
+    ip: audit.ip,
+    host: audit.host,
+  });
+  const startedAt = Date.now();
 
   try {
     const { xml, json } = await HTTPSPCService({

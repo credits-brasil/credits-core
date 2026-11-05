@@ -61,20 +61,6 @@ export async function spc337UseCase(
     host: string;
   },
 ) {
-  const order = await createOrder({
-    userId: audit.userId,
-    userName: audit.userName,
-    companyId: audit.companyId,
-    companyName: audit.companyName,
-    productName: "337-spc-relatorio",
-    typeDocument,
-    document,
-    inputs: insumos,
-    ip: audit.ip,
-    host: audit.host,
-  });
-  const startedAt = Date.now();
-
   const allowedInsumos = new Set([
     5244, 5178, 5185, 5241, 5224, 5226, 5227, 5193, 5263, 5249, 5257, 5179,
     5225, 5229, 5247, 5245, 78, 77, 5183, 5240, 5260, 5184, 5265, 5267, 5186,
@@ -92,6 +78,20 @@ export async function spc337UseCase(
       code: 400,
     });
   }
+
+  const order = await createOrder({
+    userId: audit.userId,
+    userName: audit.userName,
+    companyId: audit.companyId,
+    companyName: audit.companyName,
+    productName: "337-spc-relatorio",
+    typeDocument,
+    document,
+    inputs: insumos,
+    ip: audit.ip,
+    host: audit.host,
+  });
+  const startedAt = Date.now();
 
   try {
     const { xml, json } = await HTTPSPCService({

@@ -58,20 +58,6 @@ export async function spc323UseCase(
     host: string;
   },
 ) {
-  const order = await createOrder({
-    userId: audit.userId,
-    userName: audit.userName,
-    companyId: audit.companyId,
-    companyName: audit.companyName,
-    productName: "323-spc-mix-mais",
-    typeDocument,
-    document,
-    inputs: insumos,
-    ip: audit.ip,
-    host: audit.host,
-  });
-  const startedAt = Date.now();
-
   const allowedInsumos: Record<"CPF" | "CNPJ", number[]> = {
     CPF: [
       5180, 5262, 5195, 5194, 5241, 5224, 5227, 5190, 5228, 78, 77, 5268, 5239,
@@ -93,6 +79,20 @@ export async function spc323UseCase(
       code: 400,
     });
   }
+
+  const order = await createOrder({
+    userId: audit.userId,
+    userName: audit.userName,
+    companyId: audit.companyId,
+    companyName: audit.companyName,
+    productName: "323-spc-mix-mais",
+    typeDocument,
+    document,
+    inputs: insumos,
+    ip: audit.ip,
+    host: audit.host,
+  });
+  const startedAt = Date.now();
 
   try {
     const { xml, json } = await HTTPSPCService({
