@@ -112,77 +112,22 @@ export async function spc325UseCase(
   try {
     const allowedInsumos: Record<"CPF" | "CNPJ", string[]> = {
       CPF: [
-        "5262",
-        "5180",
-        "5266",
-        "5195",
-        "5194",
-        "5241",
-        "5224",
-        "5227",
-        "5142",
-        "5232",
-        "5228",
-        "5259",
-        "3082",
-        "5268",
-        "5240",
-        "5226",
-        "5225",
-        "5249",
-        "5256",
-        "5257",
-        "5260",
-        "5261",
-        "18",
-        "78",
-        "5254",
-        "5097",
-        "5253",
-        "5255",
-        "5264",
-        "5239",
-        "77",
-        "5122",
+        "5262", "5180", "5266", "5195", "5194", "5241", "5224", "5227",
+        "5142", "5232", "5228", "5259", "3082", "5268", "5240", "5226",
+        "5225", "5249", "5256", "5257", "5260", "5261", "18", "78",
+        "5254", "5097", "5253", "5255", "5264", "5239", "77", "5122",
       ],
       CNPJ: [
-        "5244",
-        "5178",
-        "5185",
-        "5241",
-        "5224",
-        "5227",
-        "5179",
-        "5184",
-        "5229",
-        "5245",
-        "5240",
-        "5226",
-        "5225",
-        "5249",
-        "5256",
-        "5257",
-        "5261",
-        "18",
-        "78",
-        "5247",
-        "5265",
-        "5267",
-        "5193",
-        "49",
-        "24",
-        "5186",
-        "5258",
-        "23",
-        "77",
+        "5244", "5178", "5185", "5241", "5224", "5227", "5179", "5184",
+        "5229", "5245", "5240", "5226", "5225", "5249", "5256", "5257",
+        "5261", "18", "78", "5247", "5265", "5267", "5193", "49", "24",
+        "5186", "5258", "23", "77",
       ],
     };
 
     const invalidInsumos = insumos.filter(
       (insumo) => !allowedInsumos[typeDocument].includes(insumo),
     );
-
-    // console.log(invalidInsumos, "Insumos inválidos no use-case");
 
     if (invalidInsumos.length > 0) {
       throw new FriendlyError({
@@ -192,6 +137,7 @@ export async function spc325UseCase(
       });
     }
 
+    const createOrderStartedAt = Date.now();
     await createOrder({
       id: orderId,
       userId: audit.userId,
@@ -205,20 +151,27 @@ export async function spc325UseCase(
       ip: audit.ip,
       host: audit.host,
     });
+    const createOrderMs = Date.now() - createOrderStartedAt;
+    console.log(createOrderMs, "Tempo de createOrder");
+  
     orderCreated = true;
 
+    const spcServiceStartedAt = Date.now();
     const response = await HTTPSPCService({
       productCode: 325,
       tipoConsumidor: getTipoConsumidor(typeDocument),
       document,
       insumos,
     });
+    const spcServiceMs = Date.now() - spcServiceStartedAt;
+    console.log(spcServiceMs, "Tempo de HTTPSPCService");
 
     xml = response.xml;
     json = response.json;
 
     console.log(xml, "XML recebido do serviço SPC");
 
+    const resultBuildStartedAt = Date.now();
     const result =
       typeDocument === "CPF"
         ? {
@@ -373,6 +326,11 @@ export async function spc325UseCase(
             //     "ultimo-telefone-informado"
             //   ],
             // ),
+
+            "mensagem-complemento":
+              json["S:Envelope"]["S:Body"]["ns2:resultado"][
+                "mensagem-complemento"
+              ] ?? "",
 
             // OPCIONAL
 
@@ -658,7 +616,7 @@ export async function spc325UseCase(
               ),
             }),
 
-            // 5122
+             // 5122
             ...(insumos.includes("5122") && {
               "renda-presumida-spc": get5122RendaPresumidaSPCInput(
                 json["S:Envelope"]["S:Body"]["ns2:resultado"][
@@ -1099,7 +1057,12 @@ export async function spc325UseCase(
             }),
           };
 
+    const resultBuildMs = Date.now() - resultBuildStartedAt;
+    console.log(resultBuildMs, "Tempo de construção do result");
+
     const protocol = result.protocolo ?? null;
+
+    console.log({ createOrderMs, spcServiceMs, resultBuildMs, totalMs: Date.now() - startedAt }, "Tempos da execução SPC 325");
 
     enqueueSpcOrderSnapshot({
       orderId,

@@ -58,7 +58,7 @@ export async function sendAdminWelcomeEmail(input: AdminWelcomeEmailInput) {
   const { apiKey, fromEmail } = getSendGridConfig();
   const loginUrl =
     input.loginUrl ||
-    `${process.env.FRONTEND_URL || "https://creditsbrasil.com.br".replace(/\/$/, "")}/`;
+    `${process.env.FRONTEND_URL || "https://controle-sistema.creditsbrasil.com.br".replace(/\/$/, "")}/`;
 
   sgMail.setApiKey(apiKey);
 
@@ -80,7 +80,7 @@ export async function sendUserWelcomeEmail(input: UserWelcomeEmailInput) {
   const { apiKey, fromEmail } = getSendGridConfig();
   const loginUrl =
     input.loginUrl ||
-    `${process.env.FRONTEND_URL || "https://creditsbrasil.com.br"}`.replace(/\/$/, "");
+    `${process.env.FRONTEND_URL || "https://sistema.creditsbrasil.com.br"}`.replace(/\/$/, "");
 
   sgMail.setApiKey(apiKey);
 

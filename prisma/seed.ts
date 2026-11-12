@@ -33,6 +33,7 @@ const cnpjSpcInputs = [
   ["5227", "Índice Pontualidade de Pagamento", "CNPJ"],
   ["5256", "Operações no SCR", "CNPJ"],
   ["5257", "Histórico de Operações no SCR", "CNPJ"],
+  ["5241", "Grupo Economico", "CNPJ"],
 ] as const;
 
 const cpfSpcInputs = [

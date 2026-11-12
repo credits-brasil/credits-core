@@ -46,7 +46,7 @@ export async function adminCreateUseCase(input: CreateAdminInput) {
       email: admin.email,
       name: admin.name,
       temporaryPassword: password,
-      loginUrl: process.env.FRONTEND_URL || "https://credits-platform-manager.vercel.app",
+      loginUrl: process.env.FRONTEND_URL || "https://controle-sistema.creditsbrasil.com.br",
     });
   } catch (error) {
     console.error("Failed to send admin welcome email", error);
